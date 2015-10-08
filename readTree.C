@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 // Read Pythia produced c->e and b->e events from MinBias Pythia p+p 200 GeV events
 // Updated Oct. 7, 2015 - Z. Miller
 
-=======
->>>>>>> 57e6a9c8fee51ba8198964434b612112cc19ad64
 #include "TFile.h"
 #include <fstream>
 #include <iostream>
@@ -49,6 +46,8 @@ TH1D *hdPhiRawbeN;
 TH1D *hdPhiRawbce = new TH1D("hdPhiRawbce","hdPhiRawbce",Phibin, -10,10);
 //        TH1D *hdPhiBg = new TH1D("hdPhiBg","hdPhiBg", Phibin, -PI,PI);
 //        TH1D *hdPhiMix = new TH1D("hdPhiMix","hdPhiMix",Phibin, -PI,PI);
+TH1D *hdEtaRawce = new TH1D("hdEtaRawce","hdEtaRawce",100, -5,5);
+TH1D *hdEtaRawbe = new TH1D("hdEtaRawbe","hdEtaRawbe",100, -5,5);
 TH1D *hrefmult = new TH1D("hrefmult","hrefmult",1000,0,500);
 TH1D *hept = new TH1D("hept","hept",100,0.,20.);
 
@@ -66,11 +65,11 @@ void Loop()
   cout <<"Added "<<nfile<<" files"<<endl;
   cout<<"# entries in chain: "<<chain->GetEntries()<<endl;
   if (chain == 0) return;
-  
+
   int ceNtrigger=0;
   int beNtrigger=0;
   int bceNtrigger=0;
-  
+
   //define variables
   Int_t   Event, numberofcElectrons, numberofbElectrons,numberofbcElectrons, numberofHadrons, noTracks;   //
   Float_t celectron_id,celectron_status,celectron_pt,celectron_pz,celectron_phi,celectron_eta,celectron_y;                //track info
@@ -79,8 +78,8 @@ void Loop()
   Float_t assoh_id,assoh_status,assoh_pt,assoh_pz,assoh_phi,assoh_eta,assoh_y;
 
   int goodEvent = 0;
-  
- 
+
+
   Long64_t nentries = chain->GetEntriesFast();
   int x = 0; int n = nentries; int w = 25;
 
@@ -88,7 +87,7 @@ void Loop()
     Long64_t ientry = chain->LoadTree(i);
     if (ientry < 0) break;
     TBranch *b_destep = chain->GetBranch("hf2eDecay");
-       
+
     TLeaf* leaf_Event_id            = b_destep->GetLeaf("Event_id");
     TLeaf* leaf_refMult             = b_destep->GetLeaf("refMult");
     TLeaf* leaf_numberofcElectrons  = b_destep->GetLeaf("numberofcElectrons");
@@ -96,7 +95,7 @@ void Loop()
     TLeaf* leaf_numberofbcElectrons = b_destep->GetLeaf("numberofbcElectrons");
     TLeaf* leaf_numberofHadrons     = b_destep->GetLeaf("numberofHadrons");
     TLeaf* leaf_noTracks            = b_destep->GetLeaf("noTracks");
-  
+
     TLeaf* leaf_ce_id               = b_destep->GetLeaf("ce_id");
     TLeaf* leaf_ce_status           = b_destep->GetLeaf("ce_status");
     TLeaf* leaf_ce_pt               = b_destep->GetLeaf("ce_pt");
@@ -104,7 +103,7 @@ void Loop()
     TLeaf* leaf_ce_phi              = b_destep->GetLeaf("ce_phi");
     TLeaf* leaf_ce_eta              = b_destep->GetLeaf("ce_eta");
     TLeaf* leaf_ce_y                = b_destep->GetLeaf("ce_y");
-  
+
     TLeaf* leaf_be_id               = b_destep->GetLeaf("be_id");
     TLeaf* leaf_be_status           = b_destep->GetLeaf("be_status");
     TLeaf* leaf_be_pt               = b_destep->GetLeaf("be_pt");
@@ -112,7 +111,7 @@ void Loop()
     TLeaf* leaf_be_phi              = b_destep->GetLeaf("be_phi");
     TLeaf* leaf_be_eta              = b_destep->GetLeaf("be_eta");
     TLeaf* leaf_be_y                = b_destep->GetLeaf("be_y");
-  
+
     TLeaf* leaf_bce_id              = b_destep->GetLeaf("bce_id");
     TLeaf* leaf_bce_status          = b_destep->GetLeaf("bce_status");
     TLeaf* leaf_bce_pt              = b_destep->GetLeaf("bce_pt");
@@ -120,7 +119,7 @@ void Loop()
     TLeaf* leaf_bce_phi             = b_destep->GetLeaf("bce_phi");
     TLeaf* leaf_bce_eta             = b_destep->GetLeaf("bce_eta");
     TLeaf* leaf_bce_y               = b_destep->GetLeaf("bce_y");
-  
+
     TLeaf* leaf_hadron_id           = b_destep->GetLeaf("hadron_id");
     TLeaf* leaf_hadron_status       = b_destep->GetLeaf("hadron_status");
     TLeaf* leaf_hadron_pt           = b_destep->GetLeaf("hadron_pt");
@@ -128,24 +127,24 @@ void Loop()
     TLeaf* leaf_hadron_phi          = b_destep->GetLeaf("hadron_phi");
     TLeaf* leaf_hadron_eta          = b_destep->GetLeaf("hadron_eta");
     TLeaf* leaf_hadron_y            = b_destep->GetLeaf("hadron_y");
-  
+
     x = i+1;
     // Process Completion bar
     if ( (x != n) && (x % (n/100) == 0) )
-      {
-	float ratio  =  (float)x/(float)n;
-	int   c      =  ratio * w;
-      
-	if(ratio < 1){
-	  cout << setw(3) << (int)(ratio*100) << "% [";
-	  for (int x=0; x<c; x++) cout << "=";
-	  for (int x=c; x<w; x++) cout << " ";
-	  cout << "]\r" << flush ;
-	}
+    {
+      float ratio  =  (float)x/(float)n;
+      int   c      =  ratio * w;
+
+      if(ratio < 1){
+        cout << setw(3) << (int)(ratio*100) << "% [";
+        for (int x=0; x<c; x++) cout << "=";
+        for (int x=c; x<w; x++) cout << " ";
+        cout << "]\r" << flush ;
       }
-    
+    }
+
     chain->GetEntry(i);
-  
+
     Event   = (int)leaf_Event_id->GetValue(0);
     numberofcElectrons = (int)leaf_numberofcElectrons->GetValue(0);
     //   cout << numberofcElectrons << " ";
@@ -170,26 +169,31 @@ void Loop()
       if(celectron_pt < pt_trig_lo) continue;              
       if(celectron_eta > EtaCut || celectron_eta < -EtaCut) continue;
       hept->Fill(celectron_pt);
-      
+
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
-	
-	assoh_id = (int)leaf_hadron_id->GetValue(trkj);
-	assoh_status  = (int)leaf_hadron_status->GetValue(trkj);
-	assoh_pt      = leaf_hadron_pt->GetValue(trkj);
-	assoh_pz      = leaf_hadron_pz->GetValue(trkj);
-	assoh_phi     = leaf_hadron_phi->GetValue(trkj);
-	assoh_eta     = leaf_hadron_eta->GetValue(trkj);
-	assoh_y       = leaf_hadron_y->GetValue(trkj);
-	if(assoh_eta > hEtaCut || assoh_eta < -hEtaCut) continue;
-	
-	float deltPhi = assoh_phi - celectron_phi;
-	if(deltPhi < -PI)  deltPhi += 2*PI;
-	if(deltPhi >  PI) deltPhi -= 2*PI;
-	if(celectron_pt>pt_trig_lo && celectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
-	  {hdPhiRawce->Fill(deltPhi); ceNtrigcount++;}
+
+        assoh_id = (int)leaf_hadron_id->GetValue(trkj);
+        assoh_status  = (int)leaf_hadron_status->GetValue(trkj);
+        assoh_pt      = leaf_hadron_pt->GetValue(trkj);
+        assoh_pz      = leaf_hadron_pz->GetValue(trkj);
+        assoh_phi     = leaf_hadron_phi->GetValue(trkj);
+        assoh_eta     = leaf_hadron_eta->GetValue(trkj);
+        assoh_y       = leaf_hadron_y->GetValue(trkj);
+        if(assoh_eta > hEtaCut || assoh_eta < -hEtaCut) continue;
+
+        float deltPhi = assoh_phi - celectron_phi;
+        float deltEta = assoh_eta - celectron_eta;
+        if(deltPhi < -PI)  deltPhi += 2*PI;
+        if(deltPhi >  PI) deltPhi -= 2*PI;
+        if(celectron_pt>pt_trig_lo && celectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
+        {
+          hdPhiRawce->Fill(deltPhi); 
+          hdEtaRawce->Fill(deltEta);
+          ceNtrigcount++;
+        }
       }
     }
-    
+
     if(ceNtrigcount>0)hEventTallyce->Fill("ce non photonic electron",1);
     if(ceNtrigcount>0)ceNtrigger++;
 
@@ -207,21 +211,26 @@ void Loop()
       if(belectron_eta > EtaCut || belectron_eta < -EtaCut) continue;
       hept->Fill(belectron_pt);
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
-	
-	assoh_id = (int)leaf_hadron_id->GetValue(trkj);
-	assoh_status  = (int)leaf_hadron_status->GetValue(trkj);
-	assoh_pt      = leaf_hadron_pt->GetValue(trkj);
-	assoh_pz      = leaf_hadron_pz->GetValue(trkj);
-	assoh_phi     = leaf_hadron_phi->GetValue(trkj);
-	assoh_eta     = leaf_hadron_eta->GetValue(trkj);
-	assoh_y       = leaf_hadron_y->GetValue(trkj);
-	if(assoh_eta > hEtaCut || assoh_eta < -hEtaCut) continue;
-	
-	float deltPhi = assoh_phi - belectron_phi;
-	if(deltPhi < -PI)  deltPhi += 2*PI;
-	if(deltPhi >  PI) deltPhi -= 2*PI;
-	if(belectron_pt>pt_trig_lo && belectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
-	  {hdPhiRawbe->Fill(deltPhi); beNtrigcount++;}
+
+        assoh_id = (int)leaf_hadron_id->GetValue(trkj);
+        assoh_status  = (int)leaf_hadron_status->GetValue(trkj);
+        assoh_pt      = leaf_hadron_pt->GetValue(trkj);
+        assoh_pz      = leaf_hadron_pz->GetValue(trkj);
+        assoh_phi     = leaf_hadron_phi->GetValue(trkj);
+        assoh_eta     = leaf_hadron_eta->GetValue(trkj);
+        assoh_y       = leaf_hadron_y->GetValue(trkj);
+        if(assoh_eta > hEtaCut || assoh_eta < -hEtaCut) continue;
+
+        float deltPhi = assoh_phi - belectron_phi;
+        float deltEta = assoh_eta - belectron_eta;
+        if(deltPhi < -PI)  deltPhi += 2*PI;
+        if(deltPhi >  PI) deltPhi -= 2*PI;
+        if(belectron_pt>pt_trig_lo && belectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
+        {
+          hdPhiRawbe->Fill(deltPhi);
+          hdEtaRawbe->Fill(deltEta);  
+          beNtrigcount++;
+        }
       }
     }
     if(beNtrigcount>0)hEventTallybe->Fill("be non photonic electron",1);
@@ -241,21 +250,26 @@ void Loop()
       //  if(bcelectron_eta > EtaCut || bcelectron_eta < -EtaCut) continue;
       hept->Fill(bcelectron_pt);
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
-	
-	assoh_id = (int)leaf_hadron_id->GetValue(trkj);
-	assoh_status  = (int)leaf_hadron_status->GetValue(trkj);
-	assoh_pt      = leaf_hadron_pt->GetValue(trkj);
-	assoh_pz      = leaf_hadron_pz->GetValue(trkj);
-	assoh_phi     = leaf_hadron_phi->GetValue(trkj);
-	assoh_eta     = leaf_hadron_eta->GetValue(trkj);
-	assoh_y       = leaf_hadron_y->GetValue(trkj);
-	if(assoh_eta > hEtaCut || assoh_eta < -hEtaCut) continue;
-	
-	float deltPhi = assoh_phi - bcelectron_phi;
-	if(deltPhi < -PI)  deltPhi += 2*PI;
-	if(deltPhi >  PI) deltPhi -= 2*PI;
-	if(bcelectron_pt>pt_trig_lo && bcelectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
-	  {hdPhiRawbe->Fill(deltPhi); bceNtrigcount++;}
+
+        assoh_id = (int)leaf_hadron_id->GetValue(trkj);
+        assoh_status  = (int)leaf_hadron_status->GetValue(trkj);
+        assoh_pt      = leaf_hadron_pt->GetValue(trkj);
+        assoh_pz      = leaf_hadron_pz->GetValue(trkj);
+        assoh_phi     = leaf_hadron_phi->GetValue(trkj);
+        assoh_eta     = leaf_hadron_eta->GetValue(trkj);
+        assoh_y       = leaf_hadron_y->GetValue(trkj);
+        if(assoh_eta > hEtaCut || assoh_eta < -hEtaCut) continue;
+
+        float deltPhi = assoh_phi - bcelectron_phi;
+        float deltEta = assoh_eta - celectron_eta;
+        if(deltPhi < -PI)  deltPhi += 2*PI;
+        if(deltPhi >  PI) deltPhi -= 2*PI;
+        if(bcelectron_pt>pt_trig_lo && bcelectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
+        {
+          hdPhiRawbe->Fill(deltPhi);
+          hdEtaRawbe->Fill(deltEta);  
+          bceNtrigcount++;
+        }
       }
     }
     if(bceNtrigcount>0)hEventTallybe->Fill("be non photonic electron",1);
@@ -263,14 +277,14 @@ void Loop()
 
 
     /* if(ceNtrigger+bceNtrigger+beNtrigger > 0){
-      cout<<"ce Trigger electron number = "<<ceNtrigger<<endl;
-      cout<<"be Trigger electron number = "<<beNtrigger<<endl;
-      cout<<"bce Trigger electron number = "<<bceNtrigger<<endl;
-      }*/
+       cout<<"ce Trigger electron number = "<<ceNtrigger<<endl;
+       cout<<"be Trigger electron number = "<<beNtrigger<<endl;
+       cout<<"bce Trigger electron number = "<<bceNtrigger<<endl;
+       }*/
   }
 
   // After Fill Manipulations
-  
+
   hdPhiRawceN = (TH1D*)hdPhiRawce->Clone();
   hdPhiRawceN -> SetName("hdPhiRawceN");
   hdPhiRawceN -> Sumw2();

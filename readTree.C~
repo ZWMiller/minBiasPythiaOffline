@@ -32,11 +32,7 @@ const Float_t Vz_offset = .0;
 const Float_t Vz_cut = 30;
 const Float_t refmult_binWidth = 25;
 const Int_t refmult_binNumber = 5;   //Vz bin 20
-<<<<<<< HEAD
 const int Phibin = 200;
-=======
-const int Phibin = 64;
->>>>>>> 57e6a9c8fee51ba8198964434b612112cc19ad64
 
 // Prepare output file and Hists
 TFile fout("readTreeOut.root","RECREATE");
@@ -46,19 +42,11 @@ TH1D* hEventTallyce = new TH1D("ceEventTally","ceEvent Tally",10,0,1);
 TH1D* hEventTallybe = new TH1D("beEventTally","beEvent Tally",10,0,1);
 TH1D* hEventTallybce = new TH1D("bceEventTally","bceEvent Tally",10,0,1);
 TH1F *hRefMult = new TH1F("hRefMult","hRefMult",800,0,800);
-<<<<<<< HEAD
 TH1D *hdPhiRawce = new TH1D("hdPhiRawce","hdPhiRawce",Phibin, -10,10);
 TH1D *hdPhiRawceN;
 TH1D *hdPhiRawbe = new TH1D("hdPhiRawbe","hdPhiRawbe",Phibin, -10,10);
 TH1D *hdPhiRawbeN;
 TH1D *hdPhiRawbce = new TH1D("hdPhiRawbce","hdPhiRawbce",Phibin, -10,10);
-=======
-TH1D *hdPhiRawce = new TH1D("hdPhiRawce","hdPhiRawce",Phibin, -PI,PI);
-TH1D *hdPhiRawceN;
-TH1D *hdPhiRawbe = new TH1D("hdPhiRawbe","hdPhiRawbe",Phibin, -PI,PI);
-TH1D *hdPhiRawbeN;
-TH1D *hdPhiRawbce = new TH1D("hdPhiRawbce","hdPhiRawbce",Phibin, -PI,PI);
->>>>>>> 57e6a9c8fee51ba8198964434b612112cc19ad64
 //        TH1D *hdPhiBg = new TH1D("hdPhiBg","hdPhiBg", Phibin, -PI,PI);
 //        TH1D *hdPhiMix = new TH1D("hdPhiMix","hdPhiMix",Phibin, -PI,PI);
 TH1D *hrefmult = new TH1D("hrefmult","hrefmult",1000,0,500);
