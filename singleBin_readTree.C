@@ -14,17 +14,16 @@
 #include "TObjArray.h"
 #include "TNtuple.h"
 #include "TVector2.h"
-#include "anaConst.h"
-
-Int_t getPtBin(Float_t);
-
-const Int_t numPtBins = anaConst::nPtBins;
-Float_t lowpt[numPtBins],highpt[numPtBins];
-
-const Float_t hptCut=anaConst::hptCut;
 
 const float PI = TMath::Pi();
-const float deletacut = 10.;
+const float PP0[6]={0.849029,0.854208,0.861378,0.860819,0.865031,0.868127};   //PP0,PP1,PP2  3 parameters for efficiency calculation, 6 array is for Cu centrality
+const float PP1[6]={0.079329,0.0689266,0.0588677,0.0675269,0.0543948,0.0501144};
+const float PP2[6]={0.850396,0.8306,0.798866,0.884421,0.809765,0.784555};
+const float pt_trig_up = 3.5;
+const float pt_trig_lo = 2.5;             
+const float pt_asso_up = 20.5;
+const float pt_asso_lo = 0.3;//0.15;
+const float deletacut = 0.5;
 const float EtaCut = 0.7;
 const float hEtaCut = 1.05;
 const Float_t Vz_offset = .0;
@@ -37,42 +36,27 @@ const int Phibin = 200;
 TFile fout("readTreeOut.root","RECREATE");
 
 //defining histograms
-TH1D* hEventTallyce[numPtBins];
-TH1D* hEventTallybe[numPtBins];
-TH1D* hEventTallybce[numPtBins];
-TH1D* hdPhiRawce[numPtBins];
-TH1D* hdPhiRawceN[numPtBins];
-TH1D* hdPhiRawbe[numPtBins];
-TH1D* hdPhiRawbeN[numPtBins];
-TH1D* hdPhiRawbce[numPtBins];
-TH1D* hdEtaRawce[numPtBins];
-TH1D* hdEtaRawbe[numPtBins];
-TH1D* hrefmult  = new TH1D("hrefmult","hrefmult",1000,0,500); 
-TH1D* hept[numPtBins]; 
-
+TH1D* hEventTallyce = new TH1D("ceEventTally","ceEvent Tally",10,0,1);
+TH1D* hEventTallybe = new TH1D("beEventTally","beEvent Tally",10,0,1);
+TH1D* hEventTallybce = new TH1D("bceEventTally","bceEvent Tally",10,0,1);
+TH1F *hRefMult = new TH1F("hRefMult","hRefMult",800,0,800);
+TH1D *hdPhiRawce = new TH1D("hdPhiRawce","hdPhiRawce",Phibin, -10,10);
+TH1D *hdPhiRawceN;
+TH1D *hdPhiRawbe = new TH1D("hdPhiRawbe","hdPhiRawbe",Phibin, -10,10);
+TH1D *hdPhiRawbeN;
+TH1D *hdPhiRawbce = new TH1D("hdPhiRawbce","hdPhiRawbce",Phibin, -10,10);
+//        TH1D *hdPhiBg = new TH1D("hdPhiBg","hdPhiBg", Phibin, -PI,PI);
+//        TH1D *hdPhiMix = new TH1D("hdPhiMix","hdPhiMix",Phibin, -PI,PI);
+TH1D *hdEtaRawce = new TH1D("hdEtaRawce","hdEtaRawce",100, -5,5);
+TH1D *hdEtaRawbe = new TH1D("hdEtaRawbe","hdEtaRawbe",100, -5,5);
+TH1D *hrefmult = new TH1D("hrefmult","hrefmult",1000,0,500);
+TH1D *hept = new TH1D("hept","hept",100,0.,20.);
 
 void Loop()
 {
+
   TH1F::SetDefaultSumw2(); 
   TH1D::SetDefaultSumw2(); 
-
-  for(Int_t c=0; c< numPtBins; c++)
-  {
-    lowpt[c] = anaConst::lpt[c];
-    highpt[c] = anaConst::hpt[c];
-  }
-  for(Int_t ptbin = 0; ptbin < numPtBins; ptbin++)
-  {
-    hdEtaRawce[ptbin] = new TH1D(Form("hdEtaRawce_%i",ptbin),"hdEtaRawce",100, -5,5);
-    hdEtaRawbe[ptbin] = new TH1D(Form("hdEtaRawbe_%i",ptbin),"hdEtaRawbe",100, -5,5);
-    hEventTallyce[ptbin] = new TH1D(Form("ceEventTally_%i",ptbin),"ceEvent Tally",1,0,1);
-    hEventTallybe[ptbin] = new TH1D(Form("beEventTally_%i",ptbin),"beEvent Tally",1,0,1);
-    hEventTallybce[ptbin] = new TH1D(Form("bceEventTally_%i",ptbin),"bceEvent Tally",1,0,1);
-    hdPhiRawce[ptbin] = new TH1D(Form("hdPhiRawce_%i",ptbin),"hdPhiRawce",Phibin, -10,10);
-    hdPhiRawbe[ptbin] = new TH1D(Form("hdPhiRawbe_%i",ptbin),"hdPhiRawbe",Phibin, -10,10);
-    hdPhiRawbce[ptbin] = new TH1D(Form("hdPhiRawbce_%i",ptbin),"hdPhiRawbce",Phibin, -10,10);
-    hept[ptbin] = new TH1D(Form("hept_%i",ptbin),"hept",100,0.,20.);
-  }
 
   // Make Chain
   TChain* chain = new TChain("tree");
@@ -86,7 +70,6 @@ void Loop()
   int ceNtrigger=0;
   int beNtrigger=0;
   int bceNtrigger=0;
-  int ptbin,maxptbin;
 
   //define variables
   Int_t   Event, numberofcElectrons, numberofbElectrons,numberofbcElectrons, numberofHadrons, noTracks;   //
@@ -165,7 +148,7 @@ void Loop()
 
     Event   = (int)leaf_Event_id->GetValue(0);
     numberofcElectrons = (int)leaf_numberofcElectrons->GetValue(0);
-    // cout << numberofcElectrons << " ";
+    //   cout << numberofcElectrons << " ";
     numberofbElectrons = (int)leaf_numberofbElectrons->GetValue(0);
     numberofbcElectrons = (int)leaf_numberofbcElectrons->GetValue(0);
     numberofHadrons = (int)leaf_numberofHadrons->GetValue(0);
@@ -175,21 +158,18 @@ void Loop()
 
     //loop through matched primary tracks electron find c decayed electron
     int ceNtrigcount=0;
-    maxptbin = 0;
     for(int trki = 0; trki < numberofcElectrons; trki++){
       celectron_id      = (int)leaf_ce_id->GetValue(trki);
       celectron_status  = (int)leaf_ce_status->GetValue(trki);
       celectron_pt      = leaf_ce_pt->GetValue(trki);
+      //  cout << "pt: " << celectron_pt << endl;
       celectron_pz      = leaf_ce_pz->GetValue(trki);
       celectron_phi     = leaf_ce_phi->GetValue(trki);
       celectron_eta     = leaf_ce_eta->GetValue(trki);
       celectron_y       = leaf_ce_y->GetValue(trki);
+      if(celectron_pt < pt_trig_lo) continue;              
       if(celectron_eta > EtaCut || celectron_eta < -EtaCut) continue;
-      ptbin = getPtBin(celectron_pt);
-      if(ptbin == -99) continue;
-      if(ptbin > maxptbin)
-        maxptbin = ptbin;
-      hept[ptbin]->Fill(celectron_pt);
+      hept->Fill(celectron_pt);
 
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
@@ -207,20 +187,20 @@ void Loop()
         if(deltPhi < -PI)  deltPhi += 2*PI;
         if(deltPhi >  PI) deltPhi -= 2*PI;
         if(abs(deltEta) > deletacut) continue;
-        if(assoh_pt>hptCut)
+        if(celectron_pt>pt_trig_lo && celectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
         {
-          hdPhiRawce[ptbin]->Fill(deltPhi); 
-          hdEtaRawce[ptbin]->Fill(deltEta);
+          hdPhiRawce->Fill(deltPhi); 
+          hdEtaRawce->Fill(deltEta);
           ceNtrigcount++;
         }
       }
     }
-    if(ceNtrigcount>0)hEventTallyce[maxptbin]->Fill(0.5);
+
+    if(ceNtrigcount>0)hEventTallyce->Fill("ce non photonic electron",1);
     if(ceNtrigcount>0)ceNtrigger++;
 
     //b decayed electron-------------------------------------------------- 
     int beNtrigcount=0;
-    maxptbin = 0;
     for(int trki = 0; trki < numberofbElectrons; trki++){
       belectron_id = (int)leaf_be_id->GetValue(trki);
       belectron_status  = (int)leaf_be_status->GetValue(trki);
@@ -229,12 +209,9 @@ void Loop()
       belectron_phi     = leaf_be_phi->GetValue(trki);
       belectron_eta     = leaf_be_eta->GetValue(trki);
       belectron_y        = leaf_be_y->GetValue(trki);
+      if(belectron_pt < pt_trig_lo) continue;                   //here right to set pt cut? YES,it is to electron cut------------------------------------       
       if(belectron_eta > EtaCut || belectron_eta < -EtaCut) continue;
-      ptbin = getPtBin(belectron_pt);
-      if(ptbin == -99) continue;
-      if(ptbin > maxptbin)
-        maxptbin = ptbin;
-      hept[ptbin]->Fill(belectron_pt);
+      hept->Fill(belectron_pt);
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
         assoh_id = (int)leaf_hadron_id->GetValue(trkj);
@@ -251,19 +228,19 @@ void Loop()
         if(deltPhi < -PI)  deltPhi += 2*PI;
         if(deltPhi >  PI) deltPhi -= 2*PI;
         if(abs(deltEta) > deletacut) continue;
-        if(assoh_pt>hptCut)
+        if(belectron_pt>pt_trig_lo && belectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
         {
-          hdPhiRawbe[ptbin]->Fill(deltPhi);
-          hdEtaRawbe[ptbin]->Fill(deltEta);  
+          hdPhiRawbe->Fill(deltPhi);
+          hdEtaRawbe->Fill(deltEta);  
           beNtrigcount++;
         }
       }
     }
-    if(beNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
+    if(beNtrigcount>0)hEventTallybe->Fill("be non photonic electron",1);
     if(beNtrigcount>0)beNtrigger++;
+
     //bce decayed electron-----------------------------------------------------------------                                                                                           
     int bceNtrigcount=0;
-    maxptbin = 0;
     for(int trki = 0; trki < numberofbcElectrons; trki++){
       bcelectron_id = (int)leaf_bce_id->GetValue(trki);
       bcelectron_status  = (int)leaf_bce_status->GetValue(trki);
@@ -271,13 +248,10 @@ void Loop()
       bcelectron_pz      = leaf_bce_pz->GetValue(trki);
       bcelectron_phi     = leaf_bce_phi->GetValue(trki);
       bcelectron_eta     = leaf_bce_eta->GetValue(trki);
-      bcelectron_y       = leaf_bce_y->GetValue(trki);
-      if(bcelectron_eta > EtaCut || bcelectron_eta < -EtaCut) continue;
-      ptbin = getPtBin(bcelectron_pt);
-      if(ptbin == -99) continue;
-      if(ptbin > maxptbin)
-        maxptbin = ptbin;
-      hept[ptbin]->Fill(bcelectron_pt);
+      bcelectron_y        = leaf_bce_y->GetValue(trki);
+      if(bcelectron_pt < pt_trig_lo) continue;                   //here right to set pt cut? YES,it is to electron cut------------------------------------      
+      //  if(bcelectron_eta > EtaCut || bcelectron_eta < -EtaCut) continue;
+      hept->Fill(bcelectron_pt);
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
         assoh_id = (int)leaf_hadron_id->GetValue(trkj);
@@ -294,15 +268,15 @@ void Loop()
         if(deltPhi < -PI)  deltPhi += 2*PI;
         if(deltPhi >  PI) deltPhi -= 2*PI;
         if(abs(deltEta) > deletacut) continue;
-        if(assoh_pt>hptCut)
+        if(bcelectron_pt>pt_trig_lo && bcelectron_pt<pt_trig_up && assoh_pt>pt_asso_lo)
         {
-          hdPhiRawbe[ptbin]->Fill(deltPhi);
-          hdEtaRawbe[ptbin]->Fill(deltEta);  
+          hdPhiRawbe->Fill(deltPhi);
+          hdEtaRawbe->Fill(deltEta);  
           bceNtrigcount++;
         }
       }
     }
-    if(bceNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
+    if(bceNtrigcount>0)hEventTallybe->Fill("be non photonic electron",1);
     if(bceNtrigcount>0)beNtrigger++;
 
 
@@ -314,17 +288,16 @@ void Loop()
   }
 
   // After Fill Manipulations
-  for(int qq = 0; qq < numPtBins; qq++)
-  {
-    hdPhiRawceN[qq] = (TH1D*)hdPhiRawce[qq]->Clone();
-    hdPhiRawceN[qq] -> SetName(Form("hdPhiRawceN_%i",qq));
-    hdPhiRawceN[qq] -> Sumw2();
-    hdPhiRawceN[qq] -> Scale(1./(Double_t)hEventTallyce[qq]->GetBinContent(1));
-    hdPhiRawbeN[qq] = (TH1D*)hdPhiRawbe[qq]->Clone();
-    hdPhiRawbeN[qq] -> SetName(Form("hdPhiRawbeN_%i",qq));
-    hdPhiRawbeN[qq] -> Sumw2();
-    hdPhiRawbeN[qq] -> Scale(1./(Double_t)hEventTallybe[qq]->GetBinContent(1));
-  }
+
+  hdPhiRawceN = (TH1D*)hdPhiRawce->Clone();
+  hdPhiRawceN -> SetName("hdPhiRawceN");
+  hdPhiRawceN -> Sumw2();
+  hdPhiRawceN -> Scale(1./(Double_t)hEventTallyce->GetBinContent(1));
+  hdPhiRawbeN = (TH1D*)hdPhiRawbe->Clone();
+  hdPhiRawbeN -> SetName("hdPhiRawbeN");
+  hdPhiRawbeN -> Sumw2();
+  hdPhiRawbeN -> Scale(1./(Double_t)hEventTallybe->GetBinContent(1));
+
 
   cout << "100% [";
   for (int x=0; x<w; x++) cout << "=";
@@ -332,25 +305,4 @@ void Loop()
   fout.Write();
   fout.Close();
   delete chain;
-}
-
-Int_t getPtBin(Float_t ept)
-{
-  Int_t q = 0;
-  if(ept < anaConst::lpt[q])
-  {
-    q = -98;
-  }
-  else
-  {
-    for(Int_t ii=0; ii < anaConst::nPtBins; ii++)
-    {
-      if(anaConst::lpt[ii] < ept)
-        continue;
-      q = ii;
-      break;  
-    }
-  }
-  q--; // reset to last bin where lowpt wasn't bigger
-  return q;
 }
