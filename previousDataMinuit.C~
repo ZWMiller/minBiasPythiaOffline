@@ -246,8 +246,8 @@ void minuitFit()
 
     // Subtract Pileup correction (data only)
     projData0[ptbin]->Sumw2();projData2[ptbin]->Sumw2();
-    projData0[ptbin]->Add(pileupCorrect[ptbin][0],-1);
-    projData2[ptbin]->Add(pileupCorrect[ptbin][1],-1);
+    //projData0[ptbin]->Add(pileupCorrect[ptbin][0],-1);
+    //projData2[ptbin]->Add(pileupCorrect[ptbin][1],-1);
 
     // Draw Templates on own plots
     if(ptbin+1 <= 9) deltaPhi->cd(plotbin+1);
