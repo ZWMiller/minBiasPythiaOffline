@@ -79,6 +79,9 @@ void Loop()
   int nfile = 0;
   nfile += chain->Add("pythia_tree_Oct6_1.root");
   nfile += chain->Add("pythia_tree_Oct8_1.root");
+  nfile += chain->Add("pythia_tree_Oct13_1.root");
+  nfile += chain->Add("pythia_tree_Oct13_2.root");
+  nfile += chain->Add("pythia_tree_Oct13_3.root");
   //nfile += chain->Add("liweiTemplate_part2.root");
   cout <<"Added "<<nfile<<" files"<<endl;
   cout<<"# entries in chain: "<<chain->GetEntries()<<endl;

@@ -806,11 +806,11 @@ void chi2_0(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = projData0[ptbin] -> GetBinContent(k+1);
     double ey0 = projData0[ptbin] -> GetBinError(k+1);
+    double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    //double ycomb = par[0]*y2 + y1*(1-par[0]);
-    //double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1];
-    double delta = (ycomb - y0) / ey0;
+    double delta = (ycomb - y0) / (ey0+ey1+ey2);
 
     chiSq += delta*delta;
     nDof++;
@@ -846,11 +846,11 @@ void chi2_2(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = projData2[ptbin] -> GetBinContent(k+1);
     double ey0 = projData2[ptbin] -> GetBinError(k+1);
+  double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    // double ycomb = par[0]*y2 + y1*(1-par[0]);
-    // double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1];
-    double delta = (ycomb - y0) / ey0;
+    double delta = (ycomb - y0) / (ey0+ey1+ey2);
 
     chiSq += delta*delta;
     nDof++;
@@ -885,9 +885,11 @@ void chi2_C(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = combData[ptbin] -> GetBinContent(k+1);
     double ey0 = combData[ptbin] -> GetBinError(k+1);
-    //cout << par[0] << endl;
-    double ycomb = par[0]*y2 + y1*(1-par[0]);
-    double delta = (ycomb - y0) / ey0;
+   double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey2 = projB[ptbin]     -> GetBinError(k+1);
+
+    double ycomb = getFitFunction(par,y1,y2);
+    double delta = (ycomb - y0) / (ey0+ey1+ey2);
 
     chiSq += delta*delta;
     nDof++;

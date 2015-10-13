@@ -187,8 +187,8 @@ void minuitFit()
     lbl[ptbin]->AddText(textLabel);
     lbl[ptbin]->SetFillColor(kWhite);
 
-    projB[ptbin] = (TH1D*)fT->Get(Form("hdPhiRawce_%i",ptbin));
-    projC[ptbin] = (TH1D*)fT->Get(Form("hdPhiRawbe_%i",ptbin));
+    projB[ptbin] = (TH1D*)fT->Get(Form("hdPhiRawbe_%i",ptbin));
+    projC[ptbin] = (TH1D*)fT->Get(Form("hdPhiRawce_%i",ptbin));
     projData0[ptbin]= (TH1D*)fD->Get(Form("NPEhDelPhi_0_%i",ptbin));
     projData2[ptbin]= (TH1D*)fD->Get(Form("NPEhDelPhi_2_%i",ptbin));
  
