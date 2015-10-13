@@ -26,7 +26,7 @@ const Float_t hptCut=anaConst::hptCut;
 const float PI = TMath::Pi();
 const float deletacut = 10.;
 const float EtaCut = 0.7;
-const float hEtaCut = 1.05;
+const float hEtaCut = 1.0;
 const Float_t Vz_offset = .0;
 const Float_t Vz_cut = 30;
 const Float_t refmult_binWidth = 25;
@@ -78,6 +78,7 @@ void Loop()
   TChain* chain = new TChain("tree");
   int nfile = 0;
   nfile += chain->Add("pythia_tree_Oct6_1.root");
+  nfile += chain->Add("pythia_tree_Oct8_1.root");
   //nfile += chain->Add("liweiTemplate_part2.root");
   cout <<"Added "<<nfile<<" files"<<endl;
   cout<<"# entries in chain: "<<chain->GetEntries()<<endl;

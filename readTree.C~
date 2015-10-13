@@ -24,9 +24,9 @@ Float_t lowpt[numPtBins],highpt[numPtBins];
 const Float_t hptCut=anaConst::hptCut;
 
 const float PI = TMath::Pi();
-const float deletacut = 0.5;
+const float deletacut = 10.;
 const float EtaCut = 0.7;
-const float hEtaCut = 1.05;
+const float hEtaCut = 1.0;
 const Float_t Vz_offset = .0;
 const Float_t Vz_cut = 30;
 const Float_t refmult_binWidth = 25;
