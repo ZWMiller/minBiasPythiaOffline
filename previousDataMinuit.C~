@@ -534,9 +534,9 @@ void minuitFit()
 
   c1->cd(1);
 
-  grP->SetTitle("Bottom Contribution");
-  grP->GetXaxis()->SetTitle("p_{T,e}");
-  grP->GetYaxis()->SetTitle("#frac{r_{B}}{(r_{B}+r_{C})}");
+  grP->SetTitle("");
+  grP->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
+  grP->GetYaxis()->SetTitle("r_{B}");
   gr0->SetMarkerStyle(20);
   gr0->SetMarkerSize(1);
   gr0->SetLineColor(kBlue);
@@ -549,7 +549,7 @@ void minuitFit()
   grC->SetMarkerSize(1);
   grC->SetLineColor(kRed);
   grC->SetMarkerColor(kRed);
-  grP->GetXaxis()->SetLimits(1,14);
+  grP->GetXaxis()->SetLimits(0,10);
   grP->GetYaxis()->SetRangeUser(0,1);
   grF->SetLineStyle(1);
   grFmax->SetLineStyle(2);
@@ -571,17 +571,17 @@ void minuitFit()
   grFmax->Draw("same");
   grFmin->Draw("same");
   gr0->Draw("same P");
-  grPr->Draw("same P");
+ // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
-  TLegend* leg2 = new TLegend(0.15,0.68,0.4,0.85);
-  leg2->AddEntry(gr0,"High Tower 0 Trigs","pe");
-  leg2->AddEntry(gr2,"High Tower 2 Trigs","pe");
+  TLegend* leg2 = new TLegend(0.15,0.68,0.48,0.85);
+  leg2->AddEntry(gr0,"STAR Run 12 - Low p_{T} Analysis","pe");
+  leg2->AddEntry(gr2,"STAR Run 12 - High p_{T} Analysis","pe");
   //leg2->AddEntry(grC,"Combined Trigs","pe");
-  leg2->AddEntry(grP,"Run 5/6 Analysis (Stat Uncertainty)","pe");
-  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
+  leg2->AddEntry(grP,"STAR Run 6 Analysis (Stat. Uncertainty)","pe");
+//  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
   //leg2->AddEntry(grPPr,"Run 5/6 Refit (prev Template)","pe");
-  leg2->AddEntry(grF,"FONLL (Uncertainty: Scale Only)","l");
+  leg2->AddEntry(grF,"FONLL Calculation","l");
   leg2->Draw("same");
 
   // Write to Root File if open
@@ -806,11 +806,11 @@ void chi2_0(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = projData0[ptbin] -> GetBinContent(k+1);
     double ey0 = projData0[ptbin] -> GetBinError(k+1);
+    double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    //double ycomb = par[0]*y2 + y1*(1-par[0]);
-    //double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1];
-    double delta = (ycomb - y0) / ey0;
+    double delta = (ycomb - y0) / (ey0+ey1+ey2);
 
     chiSq += delta*delta;
     nDof++;
@@ -846,11 +846,11 @@ void chi2_2(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = projData2[ptbin] -> GetBinContent(k+1);
     double ey0 = projData2[ptbin] -> GetBinError(k+1);
+  double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    // double ycomb = par[0]*y2 + y1*(1-par[0]);
-    // double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1];
-    double delta = (ycomb - y0) / ey0;
+    double delta = (ycomb - y0) / (ey0+ey1+ey2);
 
     chiSq += delta*delta;
     nDof++;
@@ -885,9 +885,11 @@ void chi2_C(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = combData[ptbin] -> GetBinContent(k+1);
     double ey0 = combData[ptbin] -> GetBinError(k+1);
-    //cout << par[0] << endl;
-    double ycomb = par[0]*y2 + y1*(1-par[0]);
-    double delta = (ycomb - y0) / ey0;
+   double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey2 = projB[ptbin]     -> GetBinError(k+1);
+
+    double ycomb = getFitFunction(par,y1,y2);
+    double delta = (ycomb - y0) / (ey0+ey1+ey2);
 
     chiSq += delta*delta;
     nDof++;

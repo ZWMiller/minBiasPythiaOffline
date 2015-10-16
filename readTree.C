@@ -194,6 +194,7 @@ void Loop()
       if(ptbin > maxptbin)
         maxptbin = ptbin;
       hept[ptbin]->Fill(celectron_pt);
+      hEventTallyce[maxptbin]->Fill(0.5); //fill for each NPE
 
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
@@ -219,8 +220,8 @@ void Loop()
         }
       }
     }
-    if(ceNtrigcount>0)hEventTallyce[maxptbin]->Fill(0.5);
-    if(ceNtrigcount>0)ceNtrigger++;
+    //if(ceNtrigcount>0)hEventTallyce[maxptbin]->Fill(0.5);
+    //if(ceNtrigcount>0)ceNtrigger++;
 
     //b decayed electron-------------------------------------------------- 
     int beNtrigcount=0;
@@ -239,6 +240,7 @@ void Loop()
       if(ptbin > maxptbin)
         maxptbin = ptbin;
       hept[ptbin]->Fill(belectron_pt);
+      hEventTallybe[maxptbin]->Fill(0.5); //fill for each NPE
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
         assoh_id = (int)leaf_hadron_id->GetValue(trkj);
@@ -263,8 +265,8 @@ void Loop()
         }
       }
     }
-    if(beNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
-    if(beNtrigcount>0)beNtrigger++;
+//    if(beNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
+//    if(beNtrigcount>0)beNtrigger++;
     //bce decayed electron-----------------------------------------------------------------                                                                                           
     int bceNtrigcount=0;
     maxptbin = 0;
@@ -282,6 +284,7 @@ void Loop()
       if(ptbin > maxptbin)
         maxptbin = ptbin;
       hept[ptbin]->Fill(bcelectron_pt);
+      hEventTallybe[maxptbin]->Fill(0.5); //fill for each NPE
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
         assoh_id = (int)leaf_hadron_id->GetValue(trkj);
@@ -306,8 +309,8 @@ void Loop()
         }
       }
     }
-    if(bceNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
-    if(bceNtrigcount>0)beNtrigger++;
+//    if(bceNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
+//    if(bceNtrigcount>0)beNtrigger++;
 
 
     /* if(ceNtrigger+bceNtrigger+beNtrigger > 0){
@@ -349,7 +352,7 @@ Int_t getPtBin(Float_t ept)
   {
     for(Int_t ii=0; ii < anaConst::nPtBins; ii++)
     {
-      if(anaConst::lpt[ii] < ept)
+      if(anaConst::lpt[ii] <= ept)
         continue;
       q = ii;
       break;  

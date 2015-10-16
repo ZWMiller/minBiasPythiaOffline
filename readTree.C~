@@ -79,6 +79,9 @@ void Loop()
   int nfile = 0;
   nfile += chain->Add("pythia_tree_Oct6_1.root");
   nfile += chain->Add("pythia_tree_Oct8_1.root");
+  nfile += chain->Add("pythia_tree_Oct13_1.root");
+  nfile += chain->Add("pythia_tree_Oct13_2.root");
+  nfile += chain->Add("pythia_tree_Oct13_3.root");
   //nfile += chain->Add("liweiTemplate_part2.root");
   cout <<"Added "<<nfile<<" files"<<endl;
   cout<<"# entries in chain: "<<chain->GetEntries()<<endl;
@@ -191,6 +194,7 @@ void Loop()
       if(ptbin > maxptbin)
         maxptbin = ptbin;
       hept[ptbin]->Fill(celectron_pt);
+      hEventTallyce[maxptbin]->Fill(0.5); //fill for each NPE
 
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
@@ -216,8 +220,8 @@ void Loop()
         }
       }
     }
-    if(ceNtrigcount>0)hEventTallyce[maxptbin]->Fill(0.5);
-    if(ceNtrigcount>0)ceNtrigger++;
+    //if(ceNtrigcount>0)hEventTallyce[maxptbin]->Fill(0.5);
+    //if(ceNtrigcount>0)ceNtrigger++;
 
     //b decayed electron-------------------------------------------------- 
     int beNtrigcount=0;
@@ -236,6 +240,7 @@ void Loop()
       if(ptbin > maxptbin)
         maxptbin = ptbin;
       hept[ptbin]->Fill(belectron_pt);
+      hEventTallybe[maxptbin]->Fill(0.5); //fill for each NPE
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
         assoh_id = (int)leaf_hadron_id->GetValue(trkj);
@@ -260,8 +265,8 @@ void Loop()
         }
       }
     }
-    if(beNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
-    if(beNtrigcount>0)beNtrigger++;
+//    if(beNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
+//    if(beNtrigcount>0)beNtrigger++;
     //bce decayed electron-----------------------------------------------------------------                                                                                           
     int bceNtrigcount=0;
     maxptbin = 0;
@@ -279,6 +284,7 @@ void Loop()
       if(ptbin > maxptbin)
         maxptbin = ptbin;
       hept[ptbin]->Fill(bcelectron_pt);
+      hEventTallybe[maxptbin]->Fill(0.5); //fill for each NPE
       for(int trkj = 0; trkj < numberofHadrons; trkj++){
 
         assoh_id = (int)leaf_hadron_id->GetValue(trkj);
@@ -303,8 +309,8 @@ void Loop()
         }
       }
     }
-    if(bceNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
-    if(bceNtrigcount>0)beNtrigger++;
+//    if(bceNtrigcount>0)hEventTallybe[maxptbin]->Fill("be non photonic electron",1);
+//    if(bceNtrigcount>0)beNtrigger++;
 
 
     /* if(ceNtrigger+bceNtrigger+beNtrigger > 0){

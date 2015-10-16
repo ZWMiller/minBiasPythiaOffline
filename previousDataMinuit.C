@@ -120,6 +120,7 @@ void minuitFit()
   TCanvas* fitResultC = new TCanvas("fitResultC","RB Extraction Combined Trigs",150,0,1150,1000);
   TCanvas* fitResultP = new TCanvas("fitResultP","RB Previous Analysis",150,0,1150,1000);
   TCanvas* scaleCheck = new TCanvas("scaleCheck","Check scale diff",150,0,1150,1000);
+  TCanvas* prettyPlot = new TCanvas("prettyPlot","PrettyPlot",150,0,1150,1000);
   deltaPhi  ->Divide(3,3);
   deltaPhi2 ->Divide(3,3);
   fitResult0->Divide(3,4);
@@ -270,6 +271,30 @@ void minuitFit()
     Hdphi[0]->Draw("same");
     deltaPhi->cd(4);
     Hdphi[1]->Draw("same");
+
+      if(ptbin == 1)
+      {
+        prettyPlot->cd();
+        plotC[ptbin]->GetYaxis()->SetRangeUser(0,0.35);
+        plotC[ptbin]->SetMarkerStyle(20);
+        plotC[ptbin]->SetMarkerSize(0.6);
+        plotB[ptbin]->SetMarkerStyle(21);
+        plotB[ptbin]->SetMarkerSize(0.6);
+        plotB[ptbin]->SetMarkerColor(kRed);
+        plotD0[ptbin]->SetMarkerStyle(22);
+        plotD0[ptbin]->SetMarkerSize(0.9);
+        plotC[ptbin]->GetXaxis()->SetTitle("#Delta#phi_{NPE-h} (rad)");
+        plotC[ptbin]->GetYaxis()->SetTitle("#frac{1}{N_{NPE}} #frac{dN}{d(#Delta#phi)}");
+        plotC[ptbin]->DrawClone("P");
+        plotB[ptbin]->DrawClone("same P");
+        plotD0[ptbin]->DrawClone("same P");
+        TLegend* legPret = new TLegend(0.65,0.6,0.85,0.85);
+        legPret->AddEntry(plotB[ptbin],"B #rightarrow NPE-h, Monte Carlo","LPE");
+        legPret->AddEntry(plotC[ptbin],"D #rightarrow NPE-h, Monte Carlo","LPE");
+        legPret->AddEntry(plotD0[ptbin],"NPE-h 2012 STAR Data","LPE");
+        lbl[ptbin]->Draw("same");
+        legPret->Draw("same");
+      }
 
     /*// Draw Scale Check
       scaleCheck->cd(1);
@@ -534,9 +559,9 @@ void minuitFit()
 
   c1->cd(1);
 
-  grP->SetTitle("Bottom Contribution");
-  grP->GetXaxis()->SetTitle("p_{T,e}");
-  grP->GetYaxis()->SetTitle("#frac{r_{B}}{(r_{B}+r_{C})}");
+  grP->SetTitle("");
+  grP->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
+  grP->GetYaxis()->SetTitle("r_{B}");
   gr0->SetMarkerStyle(20);
   gr0->SetMarkerSize(1);
   gr0->SetLineColor(kBlue);
@@ -549,7 +574,7 @@ void minuitFit()
   grC->SetMarkerSize(1);
   grC->SetLineColor(kRed);
   grC->SetMarkerColor(kRed);
-  grP->GetXaxis()->SetLimits(1,14);
+  grP->GetXaxis()->SetLimits(0,10);
   grP->GetYaxis()->SetRangeUser(0,1);
   grF->SetLineStyle(1);
   grFmax->SetLineStyle(2);
@@ -571,17 +596,17 @@ void minuitFit()
   grFmax->Draw("same");
   grFmin->Draw("same");
   gr0->Draw("same P");
-  grPr->Draw("same P");
+ // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
-  TLegend* leg2 = new TLegend(0.15,0.68,0.4,0.85);
-  leg2->AddEntry(gr0,"High Tower 0 Trigs","pe");
-  leg2->AddEntry(gr2,"High Tower 2 Trigs","pe");
+  TLegend* leg2 = new TLegend(0.15,0.68,0.48,0.85);
+  leg2->AddEntry(gr0,"STAR Run 12 - Low p_{T} Analysis","pe");
+  leg2->AddEntry(gr2,"STAR Run 12 - High p_{T} Analysis","pe");
   //leg2->AddEntry(grC,"Combined Trigs","pe");
-  leg2->AddEntry(grP,"Run 5/6 Analysis (Stat Uncertainty)","pe");
-  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
+  leg2->AddEntry(grP,"STAR Run 6 Analysis (Stat. Uncertainty)","pe");
+//  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
   //leg2->AddEntry(grPPr,"Run 5/6 Refit (prev Template)","pe");
-  leg2->AddEntry(grF,"FONLL (Uncertainty: Scale Only)","l");
+  leg2->AddEntry(grF,"FONLL Calculation","l");
   leg2->Draw("same");
 
   // Write to Root File if open
