@@ -19,6 +19,7 @@ void chi2_PP(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void chi2_PP1(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void doFit(TMinuit* ,Double_t&, Double_t&, Double_t&, Double_t&); // Generic call to start fit (function, param0, param1, err0, err1) with the par and err being global returns
 double getFitFunction(Double_t*, double, double);
+double getFitFunctionError(Double_t*,double, double);
 char FileName[100];
 char FileNameR[100];
 const Int_t numPtBins = anaConst::nPtBins;
@@ -120,6 +121,7 @@ void minuitFit()
   TCanvas* fitResultC = new TCanvas("fitResultC","RB Extraction Combined Trigs",150,0,1150,1000);
   TCanvas* fitResultP = new TCanvas("fitResultP","RB Previous Analysis",150,0,1150,1000);
   TCanvas* scaleCheck = new TCanvas("scaleCheck","Check scale diff",150,0,1150,1000);
+  TCanvas* prettyPlot = new TCanvas("prettyPlot","PrettyPlot",150,0,1150,1000);
   deltaPhi  ->Divide(3,3);
   deltaPhi2 ->Divide(3,3);
   fitResult0->Divide(3,4);
@@ -138,7 +140,7 @@ void minuitFit()
 
   // Get ptbin independent hists
   histoNorms = (TH2F*)fD->Get("histoNorms");
-   // Get Previous Analysis
+  // Get Previous Analysis
   TFile *file3 = new TFile("/Users/zach/Research/previousNPEhFigures/Chi2_25_35.root");
   Hdphi[0]  = (TH1D*)file3->Get("fit_25_35");
   HpphiD[0] = (TH1D*)file3->Get("De_25_35");
@@ -157,6 +159,7 @@ void minuitFit()
     norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
     normB = bPtNorms[ptbin]->GetBinContent(1);
     normC = cPtNorms[ptbin]->GetBinContent(1);
+    
 
     cout << ptbin << "; 0: " << norm0 << " 2: " << norm2 << endl;
 
@@ -182,8 +185,8 @@ void minuitFit()
     }
     plotbin = ptbin;
     // Init necessary plotting tools
-    lbl[ptbin] = new TPaveText(.15,.15,.35,.23,Form("NB NDC%i",ptbin));
-    sprintf(textLabel,"%.1f < P_{T,e} < %.1f",lowpt[ptbin],highpt[ptbin]);
+    lbl[ptbin] = new TPaveText(.17,.15,.35,.21,Form("NB NDC%i",ptbin));
+    sprintf(textLabel,"%.1f < P_{T} < %.1f",lowpt[ptbin],highpt[ptbin]);
     lbl[ptbin]->AddText(textLabel);
     lbl[ptbin]->SetFillColor(kWhite);
 
@@ -191,11 +194,12 @@ void minuitFit()
     projC[ptbin] = (TH1D*)fT->Get(Form("hdPhiRawce_%i",ptbin));
     projData0[ptbin]= (TH1D*)fD->Get(Form("NPEhDelPhi_0_%i",ptbin));
     projData2[ptbin]= (TH1D*)fD->Get(Form("NPEhDelPhi_2_%i",ptbin));
- 
+
     pileupCorrect[ptbin][0] = (TH1D*)fD->Get(Form("pileupCorrection_%i_0",ptbin));
     pileupCorrect[ptbin][1] = (TH1D*)fD->Get(Form("pileupCorrection_%i_2",ptbin));
-    pileupCorrect[ptbin][0]->Sumw2();
-    pileupCorrect[ptbin][1]->Sumw2();
+
+    pileupCorrect[ptbin][0]->Sumw2(); pileupCorrect[ptbin][1]->Sumw2();
+    projData0[ptbin]->Sumw2(); projData2[ptbin]->Sumw2();
 
     // Do any rebinning
     Int_t RB = 1;
@@ -245,9 +249,13 @@ void minuitFit()
     combData[ptbin]  -> Scale(1./(norm0+norm2));
 
     // Subtract Pileup correction (data only)
-    projData0[ptbin]->Sumw2();projData2[ptbin]->Sumw2();
-    //projData0[ptbin]->Add(pileupCorrect[ptbin][0],-1);
-    //projData2[ptbin]->Add(pileupCorrect[ptbin][1],-1);
+    projData0[ptbin]->Sumw2();
+    projData2[ptbin]->Sumw2();
+    projData0[ptbin]->Add(pileupCorrect[ptbin][0],-1);
+    projData2[ptbin]->Add(pileupCorrect[ptbin][1],-1);
+    projData0[ptbin]->Sumw2();
+    projData2[ptbin]->Sumw2();
+    
 
     // Draw Templates on own plots
     if(ptbin+1 <= 9) deltaPhi->cd(plotbin+1);
@@ -270,6 +278,34 @@ void minuitFit()
     Hdphi[0]->Draw("same");
     deltaPhi->cd(4);
     Hdphi[1]->Draw("same");
+
+    if(ptbin == 0)
+    {
+      prettyPlot->cd();
+      plotC[ptbin]->SetStats(kFALSE);
+      plotB[ptbin]->SetStats(kFALSE);
+      plotD0[ptbin]->SetStats(kFALSE);
+      plotC[ptbin]->SetTitle("");
+      plotC[ptbin]->GetYaxis()->SetRangeUser(0,0.35);
+      plotC[ptbin]->SetMarkerStyle(20);
+      plotC[ptbin]->SetMarkerSize(0.6);
+      plotB[ptbin]->SetMarkerStyle(21);
+      plotB[ptbin]->SetMarkerSize(0.6);
+      plotB[ptbin]->SetMarkerColor(kRed);
+      plotD0[ptbin]->SetMarkerStyle(22);
+      plotD0[ptbin]->SetMarkerSize(0.9);
+      plotC[ptbin]->GetXaxis()->SetTitle("#Delta#phi_{NPE-h} (rad)");
+      plotC[ptbin]->GetYaxis()->SetTitle("#frac{1}{N_{NPE}} #frac{dN}{d(#Delta#phi)}");
+      plotC[ptbin]->DrawClone("hist");
+      plotB[ptbin]->DrawClone("hist same");
+      plotD0[ptbin]->DrawClone("same P");
+      TLegend* legPret = new TLegend(0.57,0.62,0.85,0.87);
+      legPret->AddEntry(plotB[ptbin],"B #rightarrow NPE-h, Monte Carlo","L");
+      legPret->AddEntry(plotC[ptbin],"D #rightarrow NPE-h, Monte Carlo","L");
+      legPret->AddEntry(plotD0[ptbin],"NPE-h 2012 STAR Data","LPE");
+      lbl[ptbin]->Draw("same");
+      legPret->Draw("same");
+    }
 
     /*// Draw Scale Check
       scaleCheck->cd(1);
@@ -521,16 +557,15 @@ void minuitFit()
 
   //cout << "at bottom contrib plot" << endl;
   TCanvas* c1 = new TCanvas("c1","Bottom Contribution",150,0,1150,1000);
-  TGraphErrors *gr0     = new TGraphErrors(plotCount0-1,ptOFF1,Rb0,dx,eb0);
-  TGraphErrors *gr2     = new TGraphErrors(plotCount2-1,ptOFF2,Rb2,dx,eb2);
-  TGraphErrors *grC     = new TGraphErrors(plotCount-1,pT,RbC,dx,ebC);
+  TGraphErrors *gr0     = new TGraphErrors(plotCount0,ptOFF1,Rb0,dx,eb0);
+  TGraphErrors *gr2     = new TGraphErrors(plotCount2,ptOFF2,Rb2,dx,eb2);
+  TGraphErrors *grC     = new TGraphErrors(plotCount,pT,RbC,dx,ebC);
   TGraphErrors *grF     = new TGraphErrors(l-1,xF,yF);
   TGraphErrors *grFmax  = new TGraphErrors(l-1,xF,maxF);
   TGraphErrors *grFmin  = new TGraphErrors(l-1,xF,minF);
   TGraphErrors *grP     = new TGraphErrors(p-1,xP,yP,0,dyP);
   TGraphErrors *grPr    = new TGraphErrors(2,pTP,RbP,0,EbP);
   TGraphErrors *grPPr   = new TGraphErrors(2,pTPP,RbPP,0,EbPP);
-
 
   c1->cd(1);
 
@@ -545,10 +580,10 @@ void minuitFit()
   gr2->SetMarkerSize(1);
   gr2->SetLineColor(kRed);
   gr2->SetMarkerColor(kRed);
-  grC->SetMarkerStyle(21);
+  grC->SetMarkerStyle(24);
   grC->SetMarkerSize(1);
-  grC->SetLineColor(kRed);
-  grC->SetMarkerColor(kRed);
+  grC->SetLineColor(kMagenta);
+  grC->SetMarkerColor(kMagenta);
   grP->GetXaxis()->SetLimits(0,10);
   grP->GetYaxis()->SetRangeUser(0,1);
   grF->SetLineStyle(1);
@@ -571,15 +606,15 @@ void minuitFit()
   grFmax->Draw("same");
   grFmin->Draw("same");
   gr0->Draw("same P");
- // grPr->Draw("same P");
+  // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
   TLegend* leg2 = new TLegend(0.15,0.68,0.48,0.85);
   leg2->AddEntry(gr0,"STAR Run 12 - Low p_{T} Analysis","pe");
   leg2->AddEntry(gr2,"STAR Run 12 - High p_{T} Analysis","pe");
-  //leg2->AddEntry(grC,"Combined Trigs","pe");
+ // leg2->AddEntry(grC,"STAR Run 12 - Combined Analysis","pe");
   leg2->AddEntry(grP,"STAR Run 6 Analysis (Stat. Uncertainty)","pe");
-//  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
+  //  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
   //leg2->AddEntry(grPPr,"Run 5/6 Refit (prev Template)","pe");
   leg2->AddEntry(grF,"FONLL Calculation","l");
   leg2->Draw("same");
@@ -810,7 +845,8 @@ void chi2_0(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    double delta = (ycomb - y0) / (ey0+ey1+ey2);
+    double ycomberr = getFitFunctionError(par,ey1,ey2);  
+    double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
 
     chiSq += delta*delta;
     nDof++;
@@ -846,12 +882,12 @@ void chi2_2(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = projData2[ptbin] -> GetBinContent(k+1);
     double ey0 = projData2[ptbin] -> GetBinError(k+1);
-  double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey1 = projC[ptbin]     -> GetBinError(k+1);
     double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    double delta = (ycomb - y0) / (ey0+ey1+ey2);
-
+    double ycomberr = getFitFunctionError(par,ey1,ey2);  
+    double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
     chiSq += delta*delta;
     nDof++;
 
@@ -885,12 +921,12 @@ void chi2_C(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
     double y2  = projB[ptbin]     -> GetBinContent(k+1);
     double y0  = combData[ptbin] -> GetBinContent(k+1);
     double ey0 = combData[ptbin] -> GetBinError(k+1);
-   double ey1 = projC[ptbin]     -> GetBinError(k+1);
+    double ey1 = projC[ptbin]     -> GetBinError(k+1);
     double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
     double ycomb = getFitFunction(par,y1,y2);
-    double delta = (ycomb - y0) / (ey0+ey1+ey2);
-
+    double ycomberr = getFitFunctionError(par,ey1,ey2);  
+    double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
     chiSq += delta*delta;
     nDof++;
 
@@ -1049,4 +1085,9 @@ double getFitFunction(Double_t *par, double y1, double y2)
   return ycomb;
 }
 
+double getFitFunctionError(Double_t *par, double ey1, double ey2)
+{
+  double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
+  return ycomberr;
+}
 
