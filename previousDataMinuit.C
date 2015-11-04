@@ -336,11 +336,11 @@ void minuitFit()
     doFit(gMinuit,p01[ptbin],p00[ptbin],e01[ptbin],e00[ptbin]);
 
     // assign to plotting variables
-    if(highpt[ptbin] < 6)
+    if(highpt[ptbin] < 5)
     {
       pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
       dx[plotCount0] = 0.;
-      ptOFF1[plotCount0] = pT[ptbin];
+      ptOFF1[plotCount0] = pT[ptbin]-0.1;
       Rb0[plotCount0] = p01[ptbin];///(p01[ptbin]+p00[ptbin]);
       eb0[plotCount0] = e01[ptbin];
       plotCount0++;
@@ -371,10 +371,10 @@ void minuitFit()
     doFit(gMinuit,p21[ptbin],p20[ptbin],e21[ptbin],e20[ptbin]);
 
     // assign to plotting variables
-    if(highpt[ptbin] > 3.6)
+    if(highpt[ptbin] > 4.6)
     {
       pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
-      ptOFF2[plotCount2] = pT[ptbin];
+      ptOFF2[plotCount2] = pT[ptbin]+0.1;
       Rb2[plotCount2] = p21[ptbin];///(p21[ptbin]+p20[ptbin]);
       eb2[plotCount2] = e21[ptbin];
       plotCount2++;
@@ -571,13 +571,27 @@ void minuitFit()
 
   grP->SetTitle("");
   grP->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
-  grP->GetYaxis()->SetTitle("r_{B}");
-  gr0->SetMarkerStyle(20);
-  gr0->SetMarkerSize(1);
+  grP->GetYaxis()->SetTitle("B#rightarrowNPE / Inclusive#rightarrowNPE");
+  grP->GetXaxis()->SetTitleSize(0.06);
+  grP->GetYaxis()->SetTitleSize(0.06);
+  grP->GetXaxis()->SetTitleOffset(0.95);
+  grP->GetYaxis()->SetTitleOffset(0.77);
+  grP->GetXaxis()->SetLabelSize(0.06);
+  grP->GetYaxis()->SetLabelSize(0.06);
+  /*gr0->SetMarkerStyle(20);
+  gr0->SetMarkerSize(1.4);
   gr0->SetLineColor(kBlue);
   gr0->SetMarkerColor(kBlue);
   gr2->SetMarkerStyle(22);
-  gr2->SetMarkerSize(1);
+  gr2->SetMarkerSize(1.4);
+  gr2->SetLineColor(kRed);
+  gr2->SetMarkerColor(kRed);*/ // For Comparing HT0 and HT2
+  gr0->SetMarkerStyle(20);
+  gr0->SetMarkerSize(1.4);
+  gr0->SetLineColor(kRed);
+  gr0->SetMarkerColor(kRed);
+  gr2->SetMarkerStyle(20);
+  gr2->SetMarkerSize(1.4);
   gr2->SetLineColor(kRed);
   gr2->SetMarkerColor(kRed);
   grC->SetMarkerStyle(24);
@@ -586,6 +600,7 @@ void minuitFit()
   grC->SetMarkerColor(kMagenta);
   grP->GetXaxis()->SetLimits(0,10);
   grP->GetYaxis()->SetRangeUser(0,1);
+  grP->SetMarkerSize(1.4);
   grF->SetLineStyle(1);
   grFmax->SetLineStyle(2);
   grFmin->SetLineStyle(2);
@@ -609,11 +624,12 @@ void minuitFit()
   // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
-  TLegend* leg2 = new TLegend(0.15,0.68,0.48,0.85);
-  leg2->AddEntry(gr0,"STAR Run 12 - Low p_{T} Analysis","pe");
-  leg2->AddEntry(gr2,"STAR Run 12 - High p_{T} Analysis","pe");
+  TLegend* leg2 = new TLegend(0.15,0.68,0.52,0.88);
+  leg2->SetTextSize(.05);
+  leg2->AddEntry(gr0,"STAR Run 12","pe");
+  //leg2->AddEntry(gr2,"STAR Run 12","pe");
  // leg2->AddEntry(grC,"STAR Run 12 - Combined Analysis","pe");
-  leg2->AddEntry(grP,"STAR Run 6 Analysis (Stat. Uncertainty)","pe");
+  leg2->AddEntry(grP,"STAR Run 6","pe");
   //  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
   //leg2->AddEntry(grPPr,"Run 5/6 Refit (prev Template)","pe");
   leg2->AddEntry(grF,"FONLL Calculation","l");
