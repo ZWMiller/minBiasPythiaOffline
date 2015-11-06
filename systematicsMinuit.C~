@@ -73,9 +73,9 @@ Double_t e00S[numPtBins],e01S[numPtBins],e20S[numPtBins],e21S[numPtBins];
 Double_t pC0S[numPtBins],pC1S[numPtBins],eC0S[numPtBins],eC1S[numPtBins];
 Double_t Rb0S[numPtBins],Rb2S[numPtBins],RbCS[numPtBins],pTS[numPtBins];
 Double_t eb0S[numPtBins],eb2S[numPtBins],ebCS[numPtBins],dxS[numPtBins];
-Double_t sysChange0[numPtBins],sysChange2[numPtBins];
-Double_t ptOFF1[numPtBins],ptOFF2[numPtBins];
-Int_t plotCount0 = 0, plotCount2 = 0, plotCount = 0;
+Double_t sysChange0[numPtBins],sysChange2[numPtBins],sysChange[numPtBins],sysError[numPtBins];
+Double_t ptOFF1[numPtBins],ptOFF2[numPtBins],ptSys[numPtBins];
+Int_t plotCount0 = 0, plotCount2 = 0, plotCount = 0, plotCountSys=0;
 Double_t RbP[2],EbP[2],pTP[2],SF[2],eSF[2];
 Double_t RbPP[2],EbPP[2],pTPP[2],SFPP[2],eSFPP[2];
 
@@ -386,8 +386,11 @@ void minuitFit()
       eb0[plotCount0] = e01[ptbin];
       Rb0S[plotCount0] = p01S[ptbin];///(p01[ptbin]+p00[ptbin]);
       eb0S[plotCount0] = e01S[ptbin];
-      sysChange0[plotCount0] = 100.*(p01[ptbin]-p01S[ptbin])/p01[ptbin];
+      sysChange[plotCountSys] = 100.*(Rb0S[plotCount0]-Rb0[plotCount0])/Rb0[plotCount0];
+      sysError[plotCountSys] = ((e01[ptbin]*e01[ptbin])/(p01[ptbin]*p01[ptbin]) + (e01S[ptbin]*e01S[ptbin])/(p01S[ptbin]*p01S[ptbin]))*sysChange[plotCountSys];  
+      ptSys[plotCountSys] = pT[ptbin];
       plotCount0++;
+      plotCountSys++;
     }
 
     // Plot results
@@ -425,8 +428,11 @@ void minuitFit()
       eb2[plotCount2] = e21[ptbin];
       Rb2S[plotCount2] = p21S[ptbin];///(p21[ptbin]+p20[ptbin]);
       eb2S[plotCount2] = e21S[ptbin];
-      sysChange2[plotCount0] = 100.*(p21[ptbin]-p21S[ptbin])/p21[ptbin];
+      sysChange[plotCountSys] = 100.*(Rb2S[plotCount2]-Rb2[plotCount2])/Rb2[plotCount2];
+      sysError[plotCountSys] = ((e21[ptbin]*e21[ptbin])/(p21[ptbin]*p21[ptbin]) + (e21S[ptbin]*e21S[ptbin])/(p21S[ptbin]*p21S[ptbin]))*sysChange[plotCountSys];;  
+      ptSys[plotCountSys] = pT[ptbin];
       plotCount2++;
+      plotCountSys++;
     }
 
     // Plot results
@@ -606,7 +612,6 @@ void minuitFit()
 
   //cout << "at bottom contrib plot" << endl;
   TCanvas* c1  = new TCanvas("c1","Bottom Contribution",150,0,1150,1000);
-  TCanvas* sc1 = new TCanvas("sc1","Systematic Changes",150,0,1150,1000);
   TGraphErrors *gr0     = new TGraphErrors(plotCount0,ptOFF1,Rb0,dx,eb0);
   TGraphErrors *gr2     = new TGraphErrors(plotCount2,ptOFF2,Rb2,dx,eb2);
   TGraphErrors *grC     = new TGraphErrors(plotCount,pT,RbC,dx,ebC);
@@ -616,12 +621,12 @@ void minuitFit()
   TGraphErrors *grP     = new TGraphErrors(p-1,xP,yP,0,dyP);
   TGraphErrors *grPr    = new TGraphErrors(2,pTP,RbP,0,EbP);
   TGraphErrors *grPPr   = new TGraphErrors(2,pTPP,RbPP,0,EbPP);
-  TGraphErrors *gr0S     = new TGraphErrors(plotCount0,ptOFF1,Rb0S,dx,eb0S);
+  TGraphErrors *gr0S     = new TGraphErrors(plotCountSys,ptOFF1,Rb0S,dx,eb0S);
   TGraphErrors *gr2S     = new TGraphErrors(plotCount2,ptOFF2,Rb2S,dx,eb2S);
 
-  TGraphErrors *change0     = new TGraphErrors(plotCount0,ptOFF1,sysChange0);
-  TGraphErrors *change2     = new TGraphErrors(plotCount2,ptOFF2,sysChange2);
-  
+  TGraphErrors *change0     = new TGraphErrors(plotCountSys,ptSys,sysChange);
+ // TGraphErrors *change2     = new TGraphErrors(plotCount2,ptOFF2,sysChange2);
+
   c1->cd(1);
 
   grP->SetTitle("");
@@ -653,7 +658,7 @@ void minuitFit()
   grC->SetMarkerSize(1);
   grC->SetLineColor(kMagenta);
   grC->SetMarkerColor(kMagenta);
-  grP->GetXaxis()->SetLimits(0,10);
+  grP->GetXaxis()->SetLimits(0,15);
   grP->GetYaxis()->SetRangeUser(0,1);
   grP->SetMarkerSize(1.4);
   grF->SetLineStyle(1);
@@ -667,7 +672,6 @@ void minuitFit()
   grPPr->SetMarkerStyle(29);
   grPPr->SetMarkerColor(49);
   grPPr->SetLineColor(49);
-
 
   grP->Draw("AP");
   //grC->Draw("same P");
@@ -693,7 +697,8 @@ void minuitFit()
   leg2->AddEntry(grF,"FONLL Calculation","l");
   leg2->Draw("same");
 
-  sc1->cd();
+  TCanvas* sc1 = new TCanvas("sc1","Systematic Changes",150,0,1150,1000);
+  sc1->cd(1);
   change0->SetTitle("");
   change0->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
   change0->GetYaxis()->SetTitle("Percent Change (%)");
@@ -703,20 +708,22 @@ void minuitFit()
   change0->GetYaxis()->SetTitleOffset(0.77);
   change0->GetXaxis()->SetLabelSize(0.05);
   change0->GetYaxis()->SetLabelSize(0.05);   
-  change0->GetXaxis()->SetLimits(2,10);
+  change0->GetXaxis()->SetLimits(2,15);
   change0->GetYaxis()->SetRangeUser(-10,10);
   change0->SetMarkerStyle(22);
   change0->SetMarkerSize(1.4);
   change0->SetLineColor(kRed);
   change0->SetMarkerColor(kRed);
-  change2->SetMarkerStyle(22);
+ /* change2->SetMarkerStyle(22);
   change2->SetMarkerSize(1.4);
   change2->SetLineColor(kRed);
-  change2->SetMarkerColor(kRed);
+  change2->SetMarkerColor(kRed);*/
   change0->Draw("AP");
-  change2->Draw("same P");
-
-
+  //change2->Draw("same P");
+  gStyle->SetOptFit(1111);
+  change0->Fit("pol0","Q");
+  TF1* fitRes = change0->GetFunction("pol0");
+  fitRes->Draw("same");
 
   // Write to Root File if open
   if(makeROOT){
@@ -787,6 +794,8 @@ void minuitFit()
     // temp = fitResultC;
     // temp->Print(name);
     temp = c1;
+    temp->Print(name);
+    temp = sc1;
     temp->Print(name);
 
     sprintf(name, "FFOutput/%s.pdf]", FileName);

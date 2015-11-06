@@ -543,6 +543,7 @@ void minuitFit()
   }
   fp.close();
 
+ 
   // Get Previous Analysis 
   Int_t p=0;
   Float_t xP[100],yP[100],dyP[100];
@@ -566,6 +567,17 @@ void minuitFit()
   TGraphErrors *grP     = new TGraphErrors(p-1,xP,yP,0,dyP);
   TGraphErrors *grPr    = new TGraphErrors(2,pTP,RbP,0,EbP);
   TGraphErrors *grPPr   = new TGraphErrors(2,pTPP,RbPP,0,EbPP);
+
+  TGraph* grshade = new TGraph(2*(l-1));
+  grshade->SetName("shade");
+  int n = l-1;
+   for (int i=0;i<n;i++) {
+      grshade->SetPoint(i,xF[i],maxF[i]);
+      grshade->SetPoint(n+i,xF[n-i-1],minF[n-i-1]);
+   }
+   grshade->SetFillStyle(3013);
+   grshade->SetFillColor(16);
+   
 
   c1->cd(1);
 
@@ -598,7 +610,7 @@ void minuitFit()
   grC->SetMarkerSize(1);
   grC->SetLineColor(kMagenta);
   grC->SetMarkerColor(kMagenta);
-  grP->GetXaxis()->SetLimits(0,10);
+  grP->GetXaxis()->SetLimits(0,12);
   grP->GetYaxis()->SetRangeUser(0,1);
   grP->SetMarkerSize(1.4);
   grF->SetLineStyle(1);
@@ -621,10 +633,11 @@ void minuitFit()
   grFmax->Draw("same");
   grFmin->Draw("same");
   gr0->Draw("same P");
+  grshade->Draw("same f");
   // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
-  TLegend* leg2 = new TLegend(0.15,0.68,0.54,0.88);
+  TLegend* leg2 = new TLegend(0.15,0.68,0.52,0.88);
   leg2->SetTextSize(.05);
   leg2->AddEntry(gr0,"STAR Run 12","pe");
   //leg2->AddEntry(gr2,"STAR Run 12","pe");
@@ -767,9 +780,9 @@ Bool_t checkMakeRoot(){
       std::istringstream stream( input );
       stream >> number;
       if(number == 0)
-        fmakeROOT = kFALSE;
+        fmakeRoot = kFALSE;
       if(number == 1)
-        fmakeROOT = kTRUE;
+        fmakeRoot = kTRUE;
     }
     else
       number = 0; 
