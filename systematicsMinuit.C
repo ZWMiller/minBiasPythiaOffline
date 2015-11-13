@@ -22,6 +22,8 @@ void chi2_PP1(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void doFit(TMinuit* ,Double_t&, Double_t&, Double_t&, Double_t&); // Generic call to start fit (function, param0, param1, err0, err1) with the par and err being global returns
 double getFitFunction(Double_t*, double, double);
 double getFitFunctionError(Double_t*,double, double);
+double getFitFunctionS(Double_t*, double, double);
+double getFitFunctionErrorS(Double_t*,double, double);
 char FileName[100];
 char FileNameR[100];
 const Int_t numPtBins = anaConst::nPtBins;
@@ -55,6 +57,8 @@ Double_t curChi2;
 Double_t curNDF;
 Int_t rangeLow  = 85;  //85-116 for near-side only
 Int_t rangeHigh = 116; //75-125 for ~(-pi,pi)
+Double_t FITPARA = 1.033; // From Fit of P1. Error is 0.007 on fit`
+Double_t FITPARAS = 1.033; // From Fit of P1. Error is 0.007 on fit`
 
 // Minuit Constants
 double amin,edm,errdef;
@@ -72,13 +76,14 @@ Double_t p00S[numPtBins],p01S[numPtBins],p20S[numPtBins],p21S[numPtBins];
 Double_t e00S[numPtBins],e01S[numPtBins],e20S[numPtBins],e21S[numPtBins];
 Double_t pC0S[numPtBins],pC1S[numPtBins],eC0S[numPtBins],eC1S[numPtBins];
 Double_t Rb0S[numPtBins],Rb2S[numPtBins],RbCS[numPtBins],pTS[numPtBins];
+Double_t A0S[numPtBins],A2S[numPtBins],A0[numPtBins],A2[numPtBins];
+Double_t eA0S[numPtBins],eA2S[numPtBins],eA0[numPtBins],eA2[numPtBins];
 Double_t eb0S[numPtBins],eb2S[numPtBins],ebCS[numPtBins],dxS[numPtBins];
 Double_t sysChange0[numPtBins],sysChange2[numPtBins],sysChange[numPtBins],sysError[numPtBins];
 Double_t ptOFF1[numPtBins],ptOFF2[numPtBins],ptSys[numPtBins];
 Int_t plotCount0 = 0, plotCount2 = 0, plotCount = 0, plotCountSys=0;
 Double_t RbP[2],EbP[2],pTP[2],SF[2],eSF[2];
 Double_t RbPP[2],EbPP[2],pTPP[2],SFPP[2],eSFPP[2];
-
 // For Scale Check
 Double_t scX[numPtBins], scY[numPtBins];
 
@@ -178,7 +183,7 @@ void minuitFit()
     normC = cPtNorms[ptbin]->GetBinContent(1);
     norm0S = histoNorms->GetBinContent(histoNormsS->GetBin(1,ptbin+1));
     norm2S = histoNorms->GetBinContent(histoNormsS->GetBin(3,ptbin+1));
-    
+
 
     cout << ptbin << "; 0: " << norm0 << " 2: " << norm2 << endl;
 
@@ -226,6 +231,35 @@ void minuitFit()
     pileupCorrectS[ptbin][0]->Sumw2(); pileupCorrectS[ptbin][1]->Sumw2();
     projData0S[ptbin]->Sumw2(); projData2S[ptbin]->Sumw2();
 
+    
+    // To test systematic shift in pileup subtraction
+    TCanvas * test = new TCanvas("test","test",100,0,1000,1000);
+    test->Divide(1,2);
+    TH1D* changeHist;
+    for(int i = 0; i < 2; i++){
+      changeHist = pileupCorrectS[ptbin][i];
+      changeHist->SetMarkerStyle(20);
+      TH1D* beforeShift = (TH1D*) changeHist->Clone();
+      test->cd(i+1);
+      beforeShift->SetLineColor(kBlack);
+      beforeShift->SetMarkerColor(kBlack);
+      if(i == 0)
+        beforeShift->SetTitle("Pileup Correction Systematic HT0/HT2");
+      beforeShift->GetYaxis()->SetTitle("1/N dN/d(#Delta#phi)");
+      beforeShift->GetYaxis()->SetRangeUser(0,.01);
+      beforeShift->Draw("P");
+      TAxis* ax = changeHist->GetXaxis();
+      for(int chn = ax->GetFirst(); chn <= ax->GetLast(); chn++)
+      {
+        double current = changeHist->GetBinContent(chn);
+        double error = changeHist->GetBinError(chn);
+        //changeHist->SetBinContent(chn, current-error);
+      }
+      changeHist->SetLineColor(kRed);
+      changeHist->SetMarkerColor(kRed);
+      changeHist->Draw("same P");
+    }
+
     // Do any rebinning
     Int_t RB = 1;
     projB[ptbin]->Rebin(RB);
@@ -257,7 +291,7 @@ void minuitFit()
     plotB[ptbin]->SetLineColor(kRed);
     plotC[ptbin]->SetLineColor(kBlack);
     plotC[ptbin]->GetXaxis()->SetRangeUser(-3.5,3.5);
-    
+
     projData0S[ptbin]->SetLineColor(kBlue);
     projData2S[ptbin]->SetLineColor(kGreen+3);
     plotD0S[ptbin]->SetLineColor(kBlue);
@@ -294,7 +328,7 @@ void minuitFit()
     projData2[ptbin]->Add(pileupCorrect[ptbin][1],-1);
     projData0S[ptbin]->Add(pileupCorrectS[ptbin][0],-1);
     projData2S[ptbin]->Add(pileupCorrectS[ptbin][1],-1);
-    
+
     // Draw Templates on own plots
     if(ptbin+1 <= 9) deltaPhi->cd(plotbin+1);
     if(ptbin+1 > 9) deltaPhi2->cd(ptbin-8);
@@ -375,7 +409,7 @@ void minuitFit()
 
     gMinuit->SetFCN(chi2_0S);
     doFit(gMinuit,p01S[ptbin],p00S[ptbin],e01S[ptbin],e00S[ptbin]);
-    
+
     // assign to plotting variables
     if(highpt[ptbin] < 5)
     {
@@ -386,6 +420,10 @@ void minuitFit()
       eb0[plotCount0] = e01[ptbin];
       Rb0S[plotCount0] = p01S[ptbin];///(p01[ptbin]+p00[ptbin]);
       eb0S[plotCount0] = e01S[ptbin];
+      A0[plotCountSys] = p00[ptbin];///(p01[ptbin]+p00[ptbin]);
+      eA0[plotCountSys] = e00[ptbin];
+      A0S[plotCountSys] = p00S[ptbin];///(p01[ptbin]+p00[ptbin]);
+      eA0S[plotCountSys] = e00S[ptbin];
       sysChange[plotCountSys] = 100.*(Rb0S[plotCount0]-Rb0[plotCount0])/Rb0[plotCount0];
       sysError[plotCountSys] = ((e01[ptbin]*e01[ptbin])/(p01[ptbin]*p01[ptbin]) + (e01S[ptbin]*e01S[ptbin])/(p01S[ptbin]*p01S[ptbin]))*sysChange[plotCountSys];  
       ptSys[plotCountSys] = pT[ptbin];
@@ -402,11 +440,16 @@ void minuitFit()
     sprintf(statLabel,"Chi2/NDF: %.2f/%.0f",curChi2,curNDF);
     stat[0][ptbin]->InsertText(statLabel);
     stat[0][ptbin]->SetFillColor(kWhite);
-    cClone->Scale((1.-p01[ptbin])*p00[ptbin]); bClone->Scale(p00[ptbin]*p01[ptbin]); // scale by contribution param
+    cClone->Scale((1.-p01[ptbin])*FITPARA); bClone->Scale(p01[ptbin]*FITPARA); // scale by contribution param
     cClone->Add(bClone);
     //cClone->Scale(dClone->GetMaximum()/cClone->GetMaximum());
     dClone->GetXaxis()->SetRangeUser(anaConst::lowPhi,anaConst::highPhi);
     dClone->GetYaxis()->SetRangeUser(-0.1,0.6);
+    dClone->SetMarkerStyle(20);
+    dClone->SetMarkerColor(kBlue);
+    cClone->SetMarkerStyle(24);
+    dClone->SetMarkerSize(0.6);
+    cClone->SetMarkerSize(0.6);
     dClone->Draw();
     cClone->Draw("same");
     stat[0][ptbin]->Draw("same");
@@ -428,6 +471,10 @@ void minuitFit()
       eb2[plotCount2] = e21[ptbin];
       Rb2S[plotCount2] = p21S[ptbin];///(p21[ptbin]+p20[ptbin]);
       eb2S[plotCount2] = e21S[ptbin];
+      A0[plotCountSys] = p20[ptbin];///(p21[ptbin]+p22[ptbin]);
+      eA0[plotCountSys] = e20[ptbin];
+      A0S[plotCountSys] = p20S[ptbin];///(p21[ptbin]+p22[ptbin]);
+      eA0S[plotCountSys] = e20S[ptbin];
       sysChange[plotCountSys] = 100.*(Rb2S[plotCount2]-Rb2[plotCount2])/Rb2[plotCount2];
       sysError[plotCountSys] = ((e21[ptbin]*e21[ptbin])/(p21[ptbin]*p21[ptbin]) + (e21S[ptbin]*e21S[ptbin])/(p21S[ptbin]*p21S[ptbin]))*sysChange[plotCountSys];;  
       ptSys[plotCountSys] = pT[ptbin];
@@ -444,11 +491,16 @@ void minuitFit()
     sprintf(statLabel,"Chi2/NDF: %.2f/%.2f",curChi2,curNDF);
     stat[2][ptbin]->InsertText(statLabel);
     stat[2][ptbin]->SetFillColor(kWhite);
-    cClone->Scale((1.-p21[ptbin])*p20[ptbin]); bClone->Scale(p20[ptbin]*p21[ptbin]); // scale by contribution param
+    cClone->Scale((1.-p21[ptbin])*FITPARA); bClone->Scale(p21[ptbin]*FITPARA); // scale by contribution param
     cClone->Add(bClone);
     // cClone->Scale(dClone->GetMaximum()/cClone->GetMaximum());
     dClone->GetXaxis()->SetRangeUser(anaConst::lowPhi,anaConst::highPhi);
     dClone->GetYaxis()->SetRangeUser(-0.1,0.6);
+    dClone->SetMarkerStyle(20);
+    cClone->SetMarkerStyle(24);
+    dClone->SetMarkerColor(kGreen+3);
+    dClone->SetMarkerSize(0.6);
+    cClone->SetMarkerSize(0.6);
     dClone->Draw();
     cClone->Draw("same");
     stat[2][ptbin]->Draw("same");
@@ -623,9 +675,11 @@ void minuitFit()
   TGraphErrors *grPPr   = new TGraphErrors(2,pTPP,RbPP,0,EbPP);
   TGraphErrors *gr0S     = new TGraphErrors(plotCountSys,ptOFF1,Rb0S,dx,eb0S);
   TGraphErrors *gr2S     = new TGraphErrors(plotCount2,ptOFF2,Rb2S,dx,eb2S);
+  TGraphErrors *grA     = new TGraphErrors(plotCountSys,ptSys,A0,dx,eA0);
+  TGraphErrors *grAS     = new TGraphErrors(plotCountSys,ptSys,A0S,dx,eA0S);
 
   TGraphErrors *change0     = new TGraphErrors(plotCountSys,ptSys,sysChange);
- // TGraphErrors *change2     = new TGraphErrors(plotCount2,ptOFF2,sysChange2);
+  // TGraphErrors *change2     = new TGraphErrors(plotCount2,ptOFF2,sysChange2);
 
   c1->cd(1);
 
@@ -685,12 +739,12 @@ void minuitFit()
   // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
-  TLegend* leg2 = new TLegend(0.15,0.68,0.59,0.88);
+  TLegend* leg2 = new TLegend(0.15,0.68,0.38,0.88);
   leg2->AddEntry(gr0,"STAR Run 12 - HT0","pe");
   leg2->AddEntry(gr2,"STAR Run 12 - HT2","pe");
   leg2->AddEntry(gr0S,"STAR Run 12 - HT0, Sys","pe");
   leg2->AddEntry(gr2S,"STAR Run 12 - HT2, Sys","pe");
- // leg2->AddEntry(grC,"STAR Run 12 - Combined Analysis","pe");
+  // leg2->AddEntry(grC,"STAR Run 12 - Combined Analysis","pe");
   leg2->AddEntry(grP,"STAR Run 6","pe");
   //  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
   //leg2->AddEntry(grPPr,"Run 5/6 Refit (prev Template)","pe");
@@ -714,16 +768,31 @@ void minuitFit()
   change0->SetMarkerSize(1.4);
   change0->SetLineColor(kRed);
   change0->SetMarkerColor(kRed);
- /* change2->SetMarkerStyle(22);
-  change2->SetMarkerSize(1.4);
-  change2->SetLineColor(kRed);
-  change2->SetMarkerColor(kRed);*/
+  /* change2->SetMarkerStyle(22);
+     change2->SetMarkerSize(1.4);
+     change2->SetLineColor(kRed);
+     change2->SetMarkerColor(kRed);*/
   change0->Draw("AP");
   //change2->Draw("same P");
+  //gStyle->SetOptFit(1111);
+  //change0->Fit("pol0","Q");
+  //TF1* fitRes = change0->GetFunction("pol0");
+  //fitRes->Draw("same");
+
+  TCanvas* fitA = new TCanvas("fitA","Test Fit Param A",150,0,1150,1000);
+  fitA->cd();
+  grA->SetTitle("Norm. Fit Param");
+  grA->GetXaxis()->SetTitle("pT");
+  grA->GetYaxis()->SetTitle("p1");
+  grA->SetMarkerSize(1.4);
+  grA->SetMarkerStyle(20);
+  grA->SetMarkerColor(kRed);
+  grA->Draw("AP");
   gStyle->SetOptFit(1111);
-  change0->Fit("pol0","Q");
-  TF1* fitRes = change0->GetFunction("pol0");
-  fitRes->Draw("same");
+  grA->Fit("pol0","Q");
+  TF1* fitResA = grA->GetFunction("pol0");
+  fitResA->Draw("same");
+
 
   // Write to Root File if open
   if(makeROOT){
@@ -737,6 +806,7 @@ void minuitFit()
     grFmax->Write("FONLLmax");
     grFmin->Write("FONLLmin");
     gr0->Write("HT0");
+    change0->Write("sysChange");
     // grPr->Write("PrevTempMyData");
     //grPPr->Write("PrevTempPreData");
   }
@@ -859,9 +929,9 @@ Bool_t checkMakeRoot(){
       std::istringstream stream( input );
       stream >> number;
       if(number == 0)
-        fmakeROOT = kFALSE;
+        fmakeRoot = kFALSE;
       if(number == 1)
-        fmakeROOT = kTRUE;
+        fmakeRoot = kTRUE;
     }
     else
       number = 0; 
@@ -1032,8 +1102,8 @@ void chi2_0S(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag)
     double ey1 = projC[ptbin]     -> GetBinError(k+1);
     double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
-    double ycomb = getFitFunction(par,y1,y2);
-    double ycomberr = getFitFunctionError(par,ey1,ey2);  
+    double ycomb = getFitFunctionS(par,y1,y2);
+    double ycomberr = getFitFunctionErrorS(par,ey1,ey2);  
     double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
 
     chiSq += delta*delta;
@@ -1073,8 +1143,8 @@ void chi2_2S(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag)
     double ey1 = projC[ptbin]     -> GetBinError(k+1);
     double ey2 = projB[ptbin]     -> GetBinError(k+1);
 
-    double ycomb = getFitFunction(par,y1,y2);
-    double ycomberr = getFitFunctionError(par,ey1,ey2);  
+    double ycomb = getFitFunctionS(par,y1,y2);
+    double ycomberr = getFitFunctionErrorS(par,ey1,ey2);  
     double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
     chiSq += delta*delta;
     nDof++;
@@ -1267,7 +1337,7 @@ void chi2_PP1(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag
 
 double getFitFunction(Double_t *par, double y1, double y2)
 {
-  double ycomb = par[0]*y2 + y1*(1-par[0]); // rb*yb + (1-rb)*yv
+  double ycomb = FITPARA*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
   //double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
   //double ycomb = par[0]*y2 + y1*(1-par[0])+par[1];  // rb*yb + (1-rb)*yv + A
   return ycomb;
@@ -1275,8 +1345,22 @@ double getFitFunction(Double_t *par, double y1, double y2)
 
 double getFitFunctionError(Double_t *par, double ey1, double ey2)
 {
-  double ycomberr = sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
+  double ycomberr = FITPARA*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
  // double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
   return ycomberr;
 }
 
+double getFitFunctionS(Double_t *par, double y1, double y2)
+{
+  double ycomb = FITPARAS*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
+  //double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
+  //double ycomb = par[0]*y2 + y1*(1-par[0])+par[1];  // rb*yb + (1-rb)*yv + A
+  return ycomb;
+}
+
+double getFitFunctionErrorS(Double_t *par, double ey1, double ey2)
+{
+  double ycomberr = FITPARAS*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
+  //double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
+  return ycomberr;
+}
