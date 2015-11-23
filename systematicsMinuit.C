@@ -59,6 +59,27 @@ Int_t rangeLow  = 85;  //85-116 for near-side only
 Int_t rangeHigh = 116; //75-125 for ~(-pi,pi)
 Double_t FITPARA = 1.033; // From Fit of P1. Error is 0.007 on fit`
 Double_t FITPARAS = 1.033; // From Fit of P1. Error is 0.007 on fit`
+//FITPARAS = 1.116; // For gamma + 14% sys
+//FITPARAS = 0.9364; // For gamma - 14% sys
+//FITPARAS = 0.9917;// For pi0 Dal - 14% sys
+//FITPARAS = 1.071  // for pi0 Dal + 14%
+//FITPARAS = 1.012  // for eta Dal - 23%
+//FITPARAS = 1.053  // for eta Dal + 23%
+//FITPARAS = 1.031  // for eta Dal - Stats (1 Sig)
+//FITPARAS = 1.035  // for eta Dal + Stats (1 Sig)
+//FITPARAS = 1.047  // for gamma   + Stats (1 Sig)
+//FITPARAS = 1.019  // for gamma   - Stats (1 Sig)
+//FITPARAS = 1.028  // for pi0 Dal - Stats (1 Sig)
+//FITPARAS = 1.046  // for pi0 Dal + Stats (1 Sig)
+//FITPARAS = 1.015  // for total Reco + Fit Uncert (1 Sig)
+//FITPARAS = 1.050  // for total Reco - Fit Uncert (1 Sig)
+//FITPARAS = 1.05  // for Pileup - Fit Uncert (1 Sig)
+//FITPARAS = 1.016  // for Pileup + Fit Uncert (1 Sig)
+//FITPARAS = 1.04  // for Purity + stats (1 Sig)
+//FITPARAS = 1.025  // for Purity - stats (1 Sig)
+//delPhi Plot Limits
+Double_t plotHigh[numPtBins] = {0.3,0.32,0.32,0.45,0.47,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6};
+Double_t plotLow[numPtBins] = {0.05,0.05,0.05,0.0,0.0,0.0,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1};
 
 // Minuit Constants
 double amin,edm,errdef;
@@ -87,7 +108,7 @@ Double_t RbPP[2],EbPP[2],pTPP[2],SFPP[2],eSFPP[2];
 // For Scale Check
 Double_t scX[numPtBins], scY[numPtBins];
 
-void minuitFit()
+void systematicsMinuit()
 {
 
   TH1F::SetDefaultSumw2(); 
@@ -179,7 +200,7 @@ void minuitFit()
 
     norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
     norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
-    normB = bPtNorms[ptbin]->GetBinContent(1);
+    normB = bPtNorms[ptbin]->GetBinContent(1); // 2x is for wrapping dPhi about 0
     normC = cPtNorms[ptbin]->GetBinContent(1);
     norm0S = histoNorms->GetBinContent(histoNormsS->GetBin(1,ptbin+1));
     norm2S = histoNorms->GetBinContent(histoNormsS->GetBin(3,ptbin+1));
@@ -231,7 +252,7 @@ void minuitFit()
     pileupCorrectS[ptbin][0]->Sumw2(); pileupCorrectS[ptbin][1]->Sumw2();
     projData0S[ptbin]->Sumw2(); projData2S[ptbin]->Sumw2();
 
-    
+
     // To test systematic shift in pileup subtraction
     TCanvas * test = new TCanvas("test","test",100,0,1000,1000);
     test->Divide(1,2);
@@ -253,7 +274,7 @@ void minuitFit()
       {
         double current = changeHist->GetBinContent(chn);
         double error = changeHist->GetBinError(chn);
-        //changeHist->SetBinContent(chn, current-error);
+        //changeHist->SetBinContent(chn, current+error);
       }
       changeHist->SetLineColor(kRed);
       changeHist->SetMarkerColor(kRed);
@@ -268,6 +289,66 @@ void minuitFit()
     projData2[ptbin]->Rebin(RB);
     projData0S[ptbin]->Rebin(RB);
     projData2S[ptbin]->Rebin(RB);
+
+    // Assume symmetry for templates, use all statistics on one side, then wrap about 0
+    /*for(int q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
+    {
+      double binDPhi = projC[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+      double binVal  = projC[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+      int posDPhi = projC[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+      double binVal2 = projC[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+      projC[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+      projC[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+      cout << "c -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projC[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+      cout << "combined: " << projC[ptbin]->GetBinContent(q) << endl;
+
+      binDPhi = projB[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+      binVal  = projB[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+      posDPhi = projB[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+      binVal2 = projB[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+      projB[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+      projB[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+      cout << "b -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projB[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+      cout << "combined: " << projB[ptbin]->GetBinContent(q) << endl;
+
+      binDPhi = projData0[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+      binVal  = projData0[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+      posDPhi = projData0[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+      binVal2 = projData0[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+      projData0[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+      projData0[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+      cout << "D0 -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData0[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+      cout << "combined: " << projData0[ptbin]->GetBinContent(q) << endl;
+
+      binDPhi = projData2[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+      binVal  = projData2[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+      posDPhi = projData2[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+      binVal2 = projData2[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+      projData2[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+      projData2[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+      cout << "D2 -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData2[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+      cout << "combined: " << projData2[ptbin]->GetBinContent(q) << endl;
+
+      binDPhi = projData0S[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+      binVal  = projData0S[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+      posDPhi = projData0S[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+      binVal2 = projData0S[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+      projData0S[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+      projData0S[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+      cout << "D0S -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData0S[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+      cout << "combined: " << projData0S[ptbin]->GetBinContent(q) << endl;
+
+      binDPhi = projData2S[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+      binVal  = projData2S[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+      posDPhi = projData2S[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+      binVal2 = projData2S[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+      projData2S[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+      projData2S[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+      cout << "D2S -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData2S[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+      cout << "combined: " << projData2S[ptbin]->GetBinContent(q) << endl;
+
+
+    }*/
 
     // Clone to make plots without effecting fits
     plotD0[ptbin] = (TH1D*) projData0[ptbin]->Clone();
@@ -332,24 +413,34 @@ void minuitFit()
     // Draw Templates on own plots
     if(ptbin+1 <= 9) deltaPhi->cd(plotbin+1);
     if(ptbin+1 > 9) deltaPhi2->cd(ptbin-8);
-    plotC[ptbin]->GetYaxis()->SetRangeUser(-.1,0.8);
-    plotC[ptbin]  -> Draw("hist");
-    plotB[ptbin]  -> Draw("same hist");
-    plotD0[ptbin] -> Draw("same");
-    plotD2[ptbin] -> Draw("same");
+    plotC[ptbin]->GetYaxis()->SetRangeUser(plotLow[ptbin],plotHigh[ptbin]);
+    plotC[ptbin]->SetMarkerStyle(20);
+    plotC[ptbin]->SetMarkerSize(0.6);
+    plotB[ptbin]->SetMarkerStyle(21);
+    plotB[ptbin]->SetMarkerSize(0.6);
+    plotB[ptbin]->SetMarkerColor(kRed);
+    plotC[ptbin]->GetXaxis()->SetTitle("#Delta#phi_{NPE-h} (rad)");
+    plotC[ptbin]->GetYaxis()->SetTitle("#frac{1}{N_{NPE}} #frac{dN}{d(#Delta#phi)}");
+    plotC[ptbin]->GetXaxis()->SetLabelSize(0.05);
+    plotC[ptbin]->GetYaxis()->SetLabelSize(0.05);
+    plotC[ptbin]  -> Draw("");
+    plotB[ptbin]  -> Draw("same");
+    //plotD0[ptbin] -> Draw("same");
+    //plotD2[ptbin] -> Draw("same");
     lbl[ptbin]    -> Draw("same");
 
     TLegend* leg = new TLegend(0.65,0.6,0.85,0.85);
-    leg->AddEntry(projB[ptbin],"b#bar{b}->NPE","lpe");
-    leg->AddEntry(projC[ptbin],"c#bar{c}->NPE","lpe");
-    leg->AddEntry(projData0[ptbin],"HT0","lpe");
-    leg->AddEntry(projData2[ptbin],"HT2","lpe");
+    leg->SetTextSize(.05);
+    leg->AddEntry(plotB[ptbin],"b#bar{b}#rightarrow NPE","lp");
+    leg->AddEntry(plotC[ptbin],"c#bar{c}#rightarrow NPE","lp");
+    //leg->AddEntry(projData0[ptbin],"HT0","lpe");
+    //leg->AddEntry(projData2[ptbin],"HT2","lpe");
     leg->Draw();
 
-    deltaPhi->cd(1);
-    Hdphi[0]->Draw("same");
-    deltaPhi->cd(4);
-    Hdphi[1]->Draw("same");
+    /*deltaPhi->cd(1);
+      Hdphi[0]->Draw("same");
+      deltaPhi->cd(4);
+      Hdphi[1]->Draw("same");*/
 
     if(ptbin == 0)
     {
@@ -433,23 +524,25 @@ void minuitFit()
 
     // Plot results
     fitResult0->cd(ptbin+1);
-    TH1D* dClone = (TH1D*) projData0[ptbin]->Clone();
+    TH1D* dClone = (TH1D*) projData0S[ptbin]->Clone();
     TH1D* cClone = (TH1D*) projC[ptbin]->Clone();
     TH1D* bClone = (TH1D*) projB[ptbin]->Clone();
     stat[0][ptbin] = new TPaveText(.4,.75,.85,.85,Form("NB NDC%i",ptbin));
     sprintf(statLabel,"Chi2/NDF: %.2f/%.0f",curChi2,curNDF);
     stat[0][ptbin]->InsertText(statLabel);
     stat[0][ptbin]->SetFillColor(kWhite);
-    cClone->Scale((1.-p01[ptbin])*FITPARA); bClone->Scale(p01[ptbin]*FITPARA); // scale by contribution param
+    cClone->Scale((1.-p01S[ptbin])*FITPARA); bClone->Scale(p01S[ptbin]*FITPARA); // scale by contribution param
     cClone->Add(bClone);
     //cClone->Scale(dClone->GetMaximum()/cClone->GetMaximum());
     dClone->GetXaxis()->SetRangeUser(anaConst::lowPhi,anaConst::highPhi);
-    dClone->GetYaxis()->SetRangeUser(-0.1,0.6);
+    dClone->GetYaxis()->SetRangeUser(plotLow[ptbin],plotHigh[ptbin]);
     dClone->SetMarkerStyle(20);
     dClone->SetMarkerColor(kBlue);
     cClone->SetMarkerStyle(24);
     dClone->SetMarkerSize(0.6);
     cClone->SetMarkerSize(0.6);
+    dClone->GetXaxis()->SetLabelSize(0.05);
+    dClone->GetYaxis()->SetLabelSize(0.05);
     dClone->Draw();
     cClone->Draw("same");
     stat[0][ptbin]->Draw("same");
@@ -484,23 +577,25 @@ void minuitFit()
 
     // Plot results
     fitResult2->cd(ptbin+1);
-    dClone = (TH1D*) projData2[ptbin]->Clone();
+    dClone = (TH1D*) projData2S[ptbin]->Clone();
     cClone = (TH1D*) projC[ptbin]->Clone();
     bClone = (TH1D*) projB[ptbin]->Clone();
     stat[2][ptbin] = new TPaveText(.4,.75,.85,.85,Form("NB NDC%i",ptbin));
     sprintf(statLabel,"Chi2/NDF: %.2f/%.2f",curChi2,curNDF);
     stat[2][ptbin]->InsertText(statLabel);
     stat[2][ptbin]->SetFillColor(kWhite);
-    cClone->Scale((1.-p21[ptbin])*FITPARA); bClone->Scale(p21[ptbin]*FITPARA); // scale by contribution param
+    cClone->Scale((1.-p21S[ptbin])*FITPARA); bClone->Scale(p21S[ptbin]*FITPARA); // scale by contribution param
     cClone->Add(bClone);
     // cClone->Scale(dClone->GetMaximum()/cClone->GetMaximum());
     dClone->GetXaxis()->SetRangeUser(anaConst::lowPhi,anaConst::highPhi);
-    dClone->GetYaxis()->SetRangeUser(-0.1,0.6);
+    dClone->GetYaxis()->SetRangeUser(plotLow[ptbin],plotHigh[ptbin]);
     dClone->SetMarkerStyle(20);
     cClone->SetMarkerStyle(24);
     dClone->SetMarkerColor(kGreen+3);
     dClone->SetMarkerSize(0.6);
     cClone->SetMarkerSize(0.6);
+    dClone->GetXaxis()->SetLabelSize(0.05);
+    dClone->GetYaxis()->SetLabelSize(0.05);
     dClone->Draw();
     cClone->Draw("same");
     stat[2][ptbin]->Draw("same");
@@ -781,16 +876,16 @@ void minuitFit()
 
   TCanvas* fitA = new TCanvas("fitA","Test Fit Param A",150,0,1150,1000);
   fitA->cd();
-  grA->SetTitle("Norm. Fit Param");
-  grA->GetXaxis()->SetTitle("pT");
-  grA->GetYaxis()->SetTitle("p1");
-  grA->SetMarkerSize(1.4);
-  grA->SetMarkerStyle(20);
-  grA->SetMarkerColor(kRed);
-  grA->Draw("AP");
+  grAS->SetTitle("Norm. Fit Param");
+  grAS->GetXaxis()->SetTitle("pT");
+  grAS->GetYaxis()->SetTitle("p1");
+  grAS->SetMarkerSize(1.4);
+  grAS->SetMarkerStyle(20);
+  grAS->SetMarkerColor(kRed);
+  grAS->Draw("AP");
   gStyle->SetOptFit(1111);
-  grA->Fit("pol0","Q");
-  TF1* fitResA = grA->GetFunction("pol0");
+  grAS->Fit("pol0","Q");
+  TF1* fitResA = grAS->GetFunction("pol0");
   fitResA->Draw("same");
 
 
@@ -968,8 +1063,8 @@ void doFit(TMinuit* gMinuit, Double_t& p0, Double_t& p1, Double_t& e0, Double_t&
   gMinuit->mnexcm("SET ERR",arglist,1,ierflg);
 
   //starting values
-  double vstart[2]={0.3,1}; //frac
-  double step[2]={0.005,0.005}; //starting step
+  double vstart[2]={0.5,1}; //frac
+  double step[2]={0.001,0.005}; //starting step
   gMinuit->mnparm(0,"BtoNPE frac",vstart[0],step[0],0.000,2,ierflg);
   gMinuit->mnparm(1,"Scale Factor",vstart[1],step[1],0.000,2,ierflg);
   //simple scan to get better start values
@@ -1346,14 +1441,14 @@ double getFitFunction(Double_t *par, double y1, double y2)
 double getFitFunctionError(Double_t *par, double ey1, double ey2)
 {
   double ycomberr = FITPARA*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
- // double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
+  // double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
   return ycomberr;
 }
 
 double getFitFunctionS(Double_t *par, double y1, double y2)
 {
   double ycomb = FITPARAS*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
-  //double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
+ // double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
   //double ycomb = par[0]*y2 + y1*(1-par[0])+par[1];  // rb*yb + (1-rb)*yv + A
   return ycomb;
 }
@@ -1361,6 +1456,6 @@ double getFitFunctionS(Double_t *par, double y1, double y2)
 double getFitFunctionErrorS(Double_t *par, double ey1, double ey2)
 {
   double ycomberr = FITPARAS*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
-  //double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
+ // double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
   return ycomberr;
 }

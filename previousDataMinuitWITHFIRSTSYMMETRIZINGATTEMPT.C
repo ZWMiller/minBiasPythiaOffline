@@ -12,8 +12,6 @@ Bool_t checkMakeRoot();
 Bool_t haveName;
 void chi2_0(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void chi2_2(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
-void chi2_0S(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
-void chi2_2S(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void chi2_C(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void chi2_P0(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void chi2_P1(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
@@ -22,8 +20,6 @@ void chi2_PP1(Int_t&,Double_t*,Double_t&,Double_t* ,Int_t);
 void doFit(TMinuit* ,Double_t&, Double_t&, Double_t&, Double_t&); // Generic call to start fit (function, param0, param1, err0, err1) with the par and err being global returns
 double getFitFunction(Double_t*, double, double);
 double getFitFunctionError(Double_t*,double, double);
-double getFitFunctionS(Double_t*, double, double);
-double getFitFunctionErrorS(Double_t*,double, double);
 char FileName[100];
 char FileNameR[100];
 const Int_t numPtBins = anaConst::nPtBins;
@@ -31,19 +27,13 @@ TH1D* projB[numPtBins];
 TH1D* projC[numPtBins];
 TH1D* projData0[numPtBins];
 TH1D* projData2[numPtBins];
-TH1D* projData0S[numPtBins];
-TH1D* projData2S[numPtBins];
 TH1D* combData[numPtBins];
 TH1D* plotD0[numPtBins];
 TH1D* plotD2[numPtBins];
-TH1D* plotD0S[numPtBins];
-TH1D* plotD2S[numPtBins];
 TH1D* plotC[numPtBins];
 TH1D* plotB[numPtBins];
 TH1D* pileupCorrect[numPtBins][2];
 TH2F* histoNorms;
-TH1D* pileupCorrectS[numPtBins][2];
-TH2F* histoNormsS;
 TH1F* bPtNorms[numPtBins];
 TH1F* cPtNorms[numPtBins];
 
@@ -57,26 +47,8 @@ Double_t curChi2;
 Double_t curNDF;
 Int_t rangeLow  = 85;  //85-116 for near-side only
 Int_t rangeHigh = 116; //75-125 for ~(-pi,pi)
-Double_t FITPARA = 1.033; // From Fit of P1. Error is 0.007 on fit`
-Double_t FITPARAS = 1.025; // From Fit of P1. Error is 0.007 on fit`
-//FITPARAS = 1.116; // For gamma + 14% sys
-//FITPARAS = 0.9364; // For gamma - 14% sys
-//FITPARAS = 0.9917;// For pi0 Dal - 14% sys
-//FITPARAS = 1.071  // for pi0 Dal + 14%
-//FITPARAS = 1.012  // for eta Dal - 23%
-//FITPARAS = 1.053  // for eta Dal + 23%
-//FITPARAS = 1.031  // for eta Dal - Stats (1 Sig)
-//FITPARAS = 1.035  // for eta Dal + Stats (1 Sig)
-//FITPARAS = 1.047  // for gamma   + Stats (1 Sig)
-//FITPARAS = 1.019  // for gamma   - Stats (1 Sig)
-//FITPARAS = 1.028  // for pi0 Dal - Stats (1 Sig)
-//FITPARAS = 1.046  // for pi0 Dal + Stats (1 Sig)
-//FITPARAS = 1.015  // for total Reco + Fit Uncert (1 Sig)
-//FITPARAS = 1.050  // for total Reco - Fit Uncert (1 Sig)
-//FITPARAS = 1.05  // for Pileup - Fit Uncert (1 Sig)
-//FITPARAS = 1.016  // for Pileup + Fit Uncert (1 Sig)
-//FITPARAS = 1.04  // for Purity + stats (1 Sig)
-//FITPARAS = 1.025  // for Purity - stats (1 Sig)
+Double_t FITPARA = 1.033; // From Fit of P1: 1.033. Error is 0.007 on fit`
+
 //delPhi Plot Limits
 Double_t plotHigh[numPtBins] = {0.3,0.32,0.32,0.45,0.47,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6};
 Double_t plotLow[numPtBins] = {0.05,0.05,0.05,0.0,0.0,0.0,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1};
@@ -93,24 +65,17 @@ Double_t e00[numPtBins],e01[numPtBins],e20[numPtBins],e21[numPtBins];
 Double_t pC0[numPtBins],pC1[numPtBins],eC0[numPtBins],eC1[numPtBins];
 Double_t Rb0[numPtBins],Rb2[numPtBins],RbC[numPtBins],pT[numPtBins];
 Double_t eb0[numPtBins],eb2[numPtBins],ebC[numPtBins],dx[numPtBins];
-Double_t p00S[numPtBins],p01S[numPtBins],p20S[numPtBins],p21S[numPtBins];
-Double_t e00S[numPtBins],e01S[numPtBins],e20S[numPtBins],e21S[numPtBins];
-Double_t pC0S[numPtBins],pC1S[numPtBins],eC0S[numPtBins],eC1S[numPtBins];
-Double_t Rb0S[numPtBins],Rb2S[numPtBins],RbCS[numPtBins],pTS[numPtBins];
-Double_t A0S[numPtBins],A2S[numPtBins],A0[numPtBins],A2[numPtBins];
-Double_t eA0S[numPtBins],eA2S[numPtBins],eA0[numPtBins],eA2[numPtBins];
-Double_t eb0S[numPtBins],eb2S[numPtBins],ebCS[numPtBins],dxS[numPtBins];
-Double_t sysChange0[numPtBins],sysChange2[numPtBins],sysChange[numPtBins],sysError[numPtBins];
-Double_t ptOFF1[numPtBins],ptOFF2[numPtBins],ptSys[numPtBins];
-Int_t plotCount0 = 0, plotCount2 = 0, plotCount = 0, plotCountSys=0;
+Double_t ptOFF1[numPtBins],ptOFF2[numPtBins];
+Int_t plotCount0 = 0, plotCount2 = 0, plotCount = 0;
 Double_t RbP[2],EbP[2],pTP[2],SF[2],eSF[2];
 Double_t RbPP[2],EbPP[2],pTPP[2],SFPP[2],eSFPP[2];
+
 // For Scale Check
 Double_t scX[numPtBins], scY[numPtBins];
 
-void systematicsMinuit()
+void minuitFit()
 {
-
+  gStyle->SetOptStat(0);
   TH1F::SetDefaultSumw2(); 
   TH1D::SetDefaultSumw2(); 
 
@@ -139,9 +104,7 @@ void systematicsMinuit()
   TFile *fT = new TFile(name,"READ");
   sprintf(name,"/Users/zach/Research/rootFiles/run12NPEhPhi/currentData.root");
   TFile *fD = new TFile(name,"READ");
-  sprintf(name,"/Users/zach/Research/rootFiles/run12NPEhPhi/currentDataSystematics.root");
-  TFile *fS = new TFile(name,"READ");
-  if (fT->IsOpen()==kFALSE || fD->IsOpen()==kFALSE || fS->IsOpen()==kFALSE)
+  if (fT->IsOpen()==kFALSE || fD->IsOpen()==kFALSE)
   { std::cout << "!!!!!! Either B,C, or Data File not found !!!!!!" << std::endl
     << "Looking for currentB.root, currentC.root, and currentData.root" << std::endl;
     exit(1); }
@@ -178,11 +141,10 @@ void systematicsMinuit()
   char statLabel[100];
   char textLabel[100];
   Int_t plotbin;
-  Double_t norm0,norm2,normB,normC,norm0S,norm2S;
+  Double_t norm0,norm2,normB,normC;
 
   // Get ptbin independent hists
-  histoNorms  = (TH2F*)fD->Get("histoNorms");
-  histoNormsS = (TH2F*)fS->Get("histoNorms");
+  histoNorms = (TH2F*)fD->Get("histoNorms");
   // Get Previous Analysis
   TFile *file3 = new TFile("/Users/zach/Research/previousNPEhFigures/Chi2_25_35.root");
   Hdphi[0]  = (TH1D*)file3->Get("fit_25_35");
@@ -198,12 +160,10 @@ void systematicsMinuit()
     bPtNorms[ptbin]   = (TH1F*)fT->Get(Form("beEventTally_%i",ptbin));
     cPtNorms[ptbin]   = (TH1F*)fT->Get(Form("ceEventTally_%i",ptbin));
 
-    norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
-    norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
-    normB = bPtNorms[ptbin]->GetBinContent(1); // 2x is for wrapping dPhi about 0
-    normC = cPtNorms[ptbin]->GetBinContent(1);
-    norm0S = histoNorms->GetBinContent(histoNormsS->GetBin(1,ptbin+1));
-    norm2S = histoNorms->GetBinContent(histoNormsS->GetBin(3,ptbin+1));
+    norm0 = 2*histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
+    norm2 = 2*histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
+    normB = 2*bPtNorms[ptbin]->GetBinContent(1); //2x is for wrapping about dPhi = 0
+    normC = 2*cPtNorms[ptbin]->GetBinContent(1);
 
 
     cout << ptbin << "; 0: " << norm0 << " 2: " << norm2 << endl;
@@ -239,47 +199,12 @@ void systematicsMinuit()
     projC[ptbin] = (TH1D*)fT->Get(Form("hdPhiRawce_%i",ptbin));
     projData0[ptbin]= (TH1D*)fD->Get(Form("NPEhDelPhi_0_%i",ptbin));
     projData2[ptbin]= (TH1D*)fD->Get(Form("NPEhDelPhi_2_%i",ptbin));
-    projData0S[ptbin]= (TH1D*)fS->Get(Form("NPEhDelPhi_0_%i",ptbin));
-    projData2S[ptbin]= (TH1D*)fS->Get(Form("NPEhDelPhi_2_%i",ptbin));
 
     pileupCorrect[ptbin][0] = (TH1D*)fD->Get(Form("pileupCorrection_%i_0",ptbin));
     pileupCorrect[ptbin][1] = (TH1D*)fD->Get(Form("pileupCorrection_%i_2",ptbin));
-    pileupCorrectS[ptbin][0] = (TH1D*)fS->Get(Form("pileupCorrection_%i_0",ptbin));
-    pileupCorrectS[ptbin][1] = (TH1D*)fS->Get(Form("pileupCorrection_%i_2",ptbin));
 
     pileupCorrect[ptbin][0]->Sumw2(); pileupCorrect[ptbin][1]->Sumw2();
     projData0[ptbin]->Sumw2(); projData2[ptbin]->Sumw2();
-    pileupCorrectS[ptbin][0]->Sumw2(); pileupCorrectS[ptbin][1]->Sumw2();
-    projData0S[ptbin]->Sumw2(); projData2S[ptbin]->Sumw2();
-
-
-    // To test systematic shift in pileup subtraction
-    TCanvas * test = new TCanvas("test","test",100,0,1000,1000);
-    test->Divide(1,2);
-    TH1D* changeHist;
-    for(int i = 0; i < 2; i++){
-      changeHist = pileupCorrectS[ptbin][i];
-      changeHist->SetMarkerStyle(20);
-      TH1D* beforeShift = (TH1D*) changeHist->Clone();
-      test->cd(i+1);
-      beforeShift->SetLineColor(kBlack);
-      beforeShift->SetMarkerColor(kBlack);
-      if(i == 0)
-        beforeShift->SetTitle("Pileup Correction Systematic HT0/HT2");
-      beforeShift->GetYaxis()->SetTitle("1/N dN/d(#Delta#phi)");
-      beforeShift->GetYaxis()->SetRangeUser(0,.01);
-      beforeShift->Draw("P");
-      TAxis* ax = changeHist->GetXaxis();
-      for(int chn = ax->GetFirst(); chn <= ax->GetLast(); chn++)
-      {
-        double current = changeHist->GetBinContent(chn);
-        double error = changeHist->GetBinError(chn);
-        //changeHist->SetBinContent(chn, current+error);
-      }
-      changeHist->SetLineColor(kRed);
-      changeHist->SetMarkerColor(kRed);
-      changeHist->Draw("same P");
-    }
 
     // Do any rebinning
     Int_t RB = 1;
@@ -287,11 +212,9 @@ void systematicsMinuit()
     projC[ptbin]->Rebin(RB);
     projData0[ptbin]->Rebin(RB);
     projData2[ptbin]->Rebin(RB);
-    projData0S[ptbin]->Rebin(RB);
-    projData2S[ptbin]->Rebin(RB);
 
     // Assume symmetry for templates, use all statistics on one side, then wrap about 0
-    /*for(int q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
+    for(int q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
     {
       double binDPhi = projC[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
       double binVal  = projC[ptbin]->GetBinContent(q); // get number of counts in -dPhi
@@ -329,32 +252,13 @@ void systematicsMinuit()
       cout << "D2 -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData2[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
       cout << "combined: " << projData2[ptbin]->GetBinContent(q) << endl;
 
-      binDPhi = projData0S[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
-      binVal  = projData0S[ptbin]->GetBinContent(q); // get number of counts in -dPhi
-      posDPhi = projData0S[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
-      binVal2 = projData0S[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
-      projData0S[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
-      projData0S[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
-      cout << "D0S -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData0S[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
-      cout << "combined: " << projData0S[ptbin]->GetBinContent(q) << endl;
 
-      binDPhi = projData2S[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
-      binVal  = projData2S[ptbin]->GetBinContent(q); // get number of counts in -dPhi
-      posDPhi = projData2S[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
-      binVal2 = projData2S[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
-      projData2S[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
-      projData2S[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
-      cout << "D2S -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData2S[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
-      cout << "combined: " << projData2S[ptbin]->GetBinContent(q) << endl;
+    }
 
-
-    }*/
 
     // Clone to make plots without effecting fits
     plotD0[ptbin] = (TH1D*) projData0[ptbin]->Clone();
     plotD2[ptbin] = (TH1D*) projData2[ptbin]->Clone();
-    plotD0S[ptbin] = (TH1D*) projData0S[ptbin]->Clone();
-    plotD2S[ptbin] = (TH1D*) projData2S[ptbin]->Clone();
     plotB[ptbin]  = (TH1D*) projB[ptbin]->Clone();
     plotC[ptbin]  = (TH1D*) projC[ptbin]->Clone();
 
@@ -372,14 +276,6 @@ void systematicsMinuit()
     plotB[ptbin]->SetLineColor(kRed);
     plotC[ptbin]->SetLineColor(kBlack);
     plotC[ptbin]->GetXaxis()->SetRangeUser(-3.5,3.5);
-
-    projData0S[ptbin]->SetLineColor(kBlue);
-    projData2S[ptbin]->SetLineColor(kGreen+3);
-    plotD0S[ptbin]->SetLineColor(kBlue);
-    plotD2S[ptbin]->SetLineColor(kGreen+3);
-    plotD0S[ptbin]->SetMarkerStyle(20);
-    plotD0S[ptbin]->SetMarkerColor(kBlue);
-    plotD0S[ptbin]->SetMarkerSize(0.4);
 
     combData[ptbin] = (TH1D*) projData0[ptbin]->Clone();
     combData[ptbin] -> Add(projData2[ptbin]);
@@ -399,16 +295,15 @@ void systematicsMinuit()
     plotB[ptbin]     -> Scale(1./normB);
     plotC[ptbin]     -> Scale(1./normC);
     combData[ptbin]  -> Scale(1./(norm0+norm2));
-    projData0S[ptbin] -> Scale(1./norm0S);
-    projData2S[ptbin] -> Scale(1./norm2S);
-    plotD0S[ptbin]    -> Scale(1./norm0S);
-    plotD2S[ptbin]    -> Scale(1./norm2S);
 
     // Subtract Pileup correction (data only)
+    projData0[ptbin]->Sumw2();
+    projData2[ptbin]->Sumw2();
     projData0[ptbin]->Add(pileupCorrect[ptbin][0],-1);
     projData2[ptbin]->Add(pileupCorrect[ptbin][1],-1);
-    projData0S[ptbin]->Add(pileupCorrectS[ptbin][0],-1);
-    projData2S[ptbin]->Add(pileupCorrectS[ptbin][1],-1);
+    projData0[ptbin]->Sumw2();
+    projData2[ptbin]->Sumw2();
+
 
     // Draw Templates on own plots
     if(ptbin+1 <= 9) deltaPhi->cd(plotbin+1);
@@ -440,7 +335,7 @@ void systematicsMinuit()
     /*deltaPhi->cd(1);
       Hdphi[0]->Draw("same");
       deltaPhi->cd(4);
-      Hdphi[1]->Draw("same");*/
+      Hdphi[1]->Draw("same");*/ 
 
     if(ptbin == 0)
     {
@@ -498,40 +393,27 @@ void systematicsMinuit()
     currentPtBin = ptbin;
     doFit(gMinuit,p01[ptbin],p00[ptbin],e01[ptbin],e00[ptbin]);
 
-    gMinuit->SetFCN(chi2_0S);
-    doFit(gMinuit,p01S[ptbin],p00S[ptbin],e01S[ptbin],e00S[ptbin]);
-
     // assign to plotting variables
     if(highpt[ptbin] < 5)
     {
       pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
       dx[plotCount0] = 0.;
-      ptOFF1[plotCount0] = pT[ptbin]-0.1;
+      ptOFF1[plotCount0] = pT[ptbin];
       Rb0[plotCount0] = p01[ptbin];///(p01[ptbin]+p00[ptbin]);
       eb0[plotCount0] = e01[ptbin];
-      Rb0S[plotCount0] = p01S[ptbin];///(p01[ptbin]+p00[ptbin]);
-      eb0S[plotCount0] = e01S[ptbin];
-      A0[plotCountSys] = p00[ptbin];///(p01[ptbin]+p00[ptbin]);
-      eA0[plotCountSys] = e00[ptbin];
-      A0S[plotCountSys] = p00S[ptbin];///(p01[ptbin]+p00[ptbin]);
-      eA0S[plotCountSys] = e00S[ptbin];
-      sysChange[plotCountSys] = 100.*(Rb0S[plotCount0]-Rb0[plotCount0])/Rb0[plotCount0];
-      sysError[plotCountSys] = ((e01[ptbin]*e01[ptbin])/(p01[ptbin]*p01[ptbin]) + (e01S[ptbin]*e01S[ptbin])/(p01S[ptbin]*p01S[ptbin]))*sysChange[plotCountSys];  
-      ptSys[plotCountSys] = pT[ptbin];
       plotCount0++;
-      plotCountSys++;
     }
 
     // Plot results
     fitResult0->cd(ptbin+1);
-    TH1D* dClone = (TH1D*) projData0S[ptbin]->Clone();
+    TH1D* dClone = (TH1D*) projData0[ptbin]->Clone();
     TH1D* cClone = (TH1D*) projC[ptbin]->Clone();
     TH1D* bClone = (TH1D*) projB[ptbin]->Clone();
     stat[0][ptbin] = new TPaveText(.4,.75,.85,.85,Form("NB NDC%i",ptbin));
     sprintf(statLabel,"Chi2/NDF: %.2f/%.0f",curChi2,curNDF);
     stat[0][ptbin]->InsertText(statLabel);
     stat[0][ptbin]->SetFillColor(kWhite);
-    cClone->Scale((1.-p01S[ptbin])*FITPARA); bClone->Scale(p01S[ptbin]*FITPARA); // scale by contribution param
+    cClone->Scale((1.-p01[ptbin])*p00[ptbin]); bClone->Scale(p00[ptbin]*p01[ptbin]); // scale by contribution param
     cClone->Add(bClone);
     //cClone->Scale(dClone->GetMaximum()/cClone->GetMaximum());
     dClone->GetXaxis()->SetRangeUser(anaConst::lowPhi,anaConst::highPhi);
@@ -552,39 +434,27 @@ void systematicsMinuit()
     cout << "!!!!!!! HT2 ptbin: " <<  highpt[ptbin] << "-" << lowpt[ptbin] <<" !!!!!!!"<< endl;
     gMinuit->SetFCN(chi2_2);
     doFit(gMinuit,p21[ptbin],p20[ptbin],e21[ptbin],e20[ptbin]);
-    gMinuit->SetFCN(chi2_2S);
-    doFit(gMinuit,p21S[ptbin],p20S[ptbin],e21S[ptbin],e20S[ptbin]);
 
     // assign to plotting variables
     if(highpt[ptbin] > 4.6)
     {
       pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
-      ptOFF2[plotCount2] = pT[ptbin]+0.1;
-      Rb2[plotCount2] = p21[ptbin];///(p21[ptbin]+p20[ptbin]);
-      eb2[plotCount2] = e21[ptbin];
-      Rb2S[plotCount2] = p21S[ptbin];///(p21[ptbin]+p20[ptbin]);
-      eb2S[plotCount2] = e21S[ptbin];
-      A0[plotCountSys] = p20[ptbin];///(p21[ptbin]+p22[ptbin]);
-      eA0[plotCountSys] = e20[ptbin];
-      A0S[plotCountSys] = p20S[ptbin];///(p21[ptbin]+p22[ptbin]);
-      eA0S[plotCountSys] = e20S[ptbin];
-      sysChange[plotCountSys] = 100.*(Rb2S[plotCount2]-Rb2[plotCount2])/Rb2[plotCount2];
-      sysError[plotCountSys] = ((e21[ptbin]*e21[ptbin])/(p21[ptbin]*p21[ptbin]) + (e21S[ptbin]*e21S[ptbin])/(p21S[ptbin]*p21S[ptbin]))*sysChange[plotCountSys];;  
-      ptSys[plotCountSys] = pT[ptbin];
-      plotCount2++;
-      plotCountSys++;
+      ptOFF1[plotCount0] = pT[ptbin];
+      Rb0[plotCount0] = p21[ptbin];///(p21[ptbin]+p20[ptbin]);
+      eb0[plotCount0] = e21[ptbin];
+      plotCount0++;
     }
 
     // Plot results
     fitResult2->cd(ptbin+1);
-    dClone = (TH1D*) projData2S[ptbin]->Clone();
+    dClone = (TH1D*) projData2[ptbin]->Clone();
     cClone = (TH1D*) projC[ptbin]->Clone();
     bClone = (TH1D*) projB[ptbin]->Clone();
     stat[2][ptbin] = new TPaveText(.4,.75,.85,.85,Form("NB NDC%i",ptbin));
     sprintf(statLabel,"Chi2/NDF: %.2f/%.2f",curChi2,curNDF);
     stat[2][ptbin]->InsertText(statLabel);
     stat[2][ptbin]->SetFillColor(kWhite);
-    cClone->Scale((1.-p21S[ptbin])*FITPARA); bClone->Scale(p21S[ptbin]*FITPARA); // scale by contribution param
+    cClone->Scale((1.-p21[ptbin])*p20[ptbin]); bClone->Scale(p20[ptbin]*p21[ptbin]); // scale by contribution param
     cClone->Add(bClone);
     // cClone->Scale(dClone->GetMaximum()/cClone->GetMaximum());
     dClone->GetXaxis()->SetRangeUser(anaConst::lowPhi,anaConst::highPhi);
@@ -745,22 +615,26 @@ void systematicsMinuit()
   }
   fp.close();
 
+
   // Get Previous Analysis 
   Int_t p=0;
-  Float_t xP[100],yP[100],dyP[100];
+  Float_t xP[100],yP[100],dyP[100],dyPSL[100],dyPSH[100],dxPS[100];
   ifstream fp1("/Users/zach/Research/pythia/200GeVTemplate/run5_6.txt",ios::in);
   while (!fp1.eof()){
     fp1.getline(line,1000);
-    sscanf(line,"%f %f %f",&xP[p],&yP[p],&dyP[p]);
+    sscanf(line,"%f %f %f %f %f",&xP[p],&yP[p],&dyP[p],&dyPSL[p],&dyPSH[p]);
     // printf("L: %f %f\n",xF[l],yF[l]);
+    dyPSL[p] = yP[p]-dyPSL[p];   // convert from max/min of error bar to value of
+    dyPSH[p] = dyPSH[p] - yP[p]; // error bar for plotting
+    dxPS[p] = 0.15;
     p++;
   }
   fp1.close();
 
   //cout << "at bottom contrib plot" << endl;
-  TCanvas* c1  = new TCanvas("c1","Bottom Contribution",150,0,1150,1000);
-  TGraphErrors *gr0     = new TGraphErrors(plotCount0,ptOFF1,Rb0,dx,eb0);
-  TGraphErrors *gr2     = new TGraphErrors(plotCount2,ptOFF2,Rb2,dx,eb2);
+  TCanvas* c1 = new TCanvas("c1","Bottom Contribution",150,0,1150,1000);
+  TGraphErrors *gr0     = new TGraphErrors(plotCount0-1,ptOFF1,Rb0,dx,eb0);
+  // TGraphErrors *gr2     = new TGraphErrors(plotCount2,ptOFF2,Rb2,dx,eb2);
   TGraphErrors *grC     = new TGraphErrors(plotCount,pT,RbC,dx,ebC);
   TGraphErrors *grF     = new TGraphErrors(l-1,xF,yF);
   TGraphErrors *grFmax  = new TGraphErrors(l-1,xF,maxF);
@@ -768,53 +642,124 @@ void systematicsMinuit()
   TGraphErrors *grP     = new TGraphErrors(p-1,xP,yP,0,dyP);
   TGraphErrors *grPr    = new TGraphErrors(2,pTP,RbP,0,EbP);
   TGraphErrors *grPPr   = new TGraphErrors(2,pTPP,RbPP,0,EbPP);
-  TGraphErrors *gr0S     = new TGraphErrors(plotCountSys,ptOFF1,Rb0S,dx,eb0S);
-  TGraphErrors *gr2S     = new TGraphErrors(plotCount2,ptOFF2,Rb2S,dx,eb2S);
-  TGraphErrors *grA     = new TGraphErrors(plotCountSys,ptSys,A0,dx,eA0);
-  TGraphErrors *grAS     = new TGraphErrors(plotCountSys,ptSys,A0S,dx,eA0S);
+  TGraphAsymmErrors *grPS = new TGraphAsymmErrors(p-1,xP,yP,dxPS,dxPS,dyPSL,dyPSH);
 
-  TGraphErrors *change0     = new TGraphErrors(plotCountSys,ptSys,sysChange);
-  // TGraphErrors *change2     = new TGraphErrors(plotCount2,ptOFF2,sysChange2);
+
+  TGraph* grshade = new TGraph(2*(l-1));
+  grshade->SetName("shade");
+  int n = l-1;
+  for (int i=0;i<n;i++) {
+    grshade->SetPoint(i,xF[i],maxF[i]);
+    grshade->SetPoint(n+i,xF[n-i-1],minF[n-i-1]);
+  }
+  grshade->SetFillStyle(1001);
+  grshade->SetFillColor(19);
+
+  // Get Systematic Errors
+  TFile* fSys;
+  TString fileList[18] = {
+    "FFOutput/sysChange_etaContShiftMinus_11_18_FIT.root",
+    "FFOutput/sysChange_etaContShiftPlus_11_18_FIT.root",
+    //"FFOutput/sysChange_etaContStatMinus_11_18_FIT.root",
+    //"FFOutput/sysChange_etaContStatPlus_11_18_FIT.root",
+    "FFOutput/sysChange_gammaContStatMinus_11_18_FIT.root",
+    "FFOutput/sysChange_gammaContStatPlus_11_18_FIT.root",
+    //"FFOutput/sysChange_gammaContShiftMinus_11_18_FIT.root",
+    //"FFOutput/sysChange_gammaContShiftPlus_11_18_FIT.root",
+    "FFOutput/sysChange_piContStatMinus_11_18_FIT.root",
+    "FFOutput/sysChange_piContStatPlus_11_18_FIT.root",
+    //"FFOutput/sysChange_piContShiftMinus_11_18_FIT.root",
+    //"FFOutput/sysChange_piContShiftPlus_11_18_FIT.root",
+    "FFOutput/sysChange_fitNormPlus_11_12_FIT.root",
+    "FFOutput/sysChange_fitNormMinus_11_12_FIT.root",
+    "FFOutput/sysChange_pileupFitPlus_11_18_FIT.root",
+    "FFOutput/sysChange_pileupFitMinus_11_18_FIT.root",
+    "FFOutput/sysChange_totalRecoPlus_11_18_FIT.root",
+    "FFOutput/sysChange_totalRecoMinus_11_18_FIT.root",
+  };
+
+  int nSys;
+  double x[18][numPtBins],y[18][numPtBins];
+  double sysP[numPtBins]={0.}, sysM[numPtBins]={0.}, pTSys[numPtBins]={0.}, dxSys[numPtBins]={0};
+  TGraphAsymmErrors* grEr;
+  for(int i = 0; i < 18; i++)
+  {
+    fSys = new TFile(fileList[i]);
+    if(!fSys->IsOpen())
+      continue;
+
+    cout << "Opened " << fileList[i] << endl;
+
+    TGraphErrors* grTemp = (TGraphErrors*)fSys->Get("sysChange");
+    nSys = grTemp->GetN(); // Get plot array dimension
+    for(int ii = 0; ii < nSys; ii++)
+    {
+      grTemp->GetPoint(ii,x[i][ii],y[i][ii]); // get point ii (from array), store in x,y
+      //cout << "pt: " << x[i][ii] << " %: " << y[i][ii] << endl;
+      cout << y[i][ii] << endl;
+      pTSys[ii] = x[i][ii];
+      if(y[i][ii] > 0 && y[i][ii] < 50) // Add up the squares of all positive contrib in each pt
+        sysP[ii] += y[i][ii]*y[i][ii];
+      if(y[i][ii] < 0 && y[i][ii] > -50) // Add up the squares of all negative contrib in each pt
+        sysM[ii] += y[i][ii]*y[i][ii];
+    }
+    fSys->Close();
+
+  }
+
+  for(int ii = 0; ii < nSys; ii++) // After all runs, loop through pT, to square root
+  {
+    sysP[ii] = sqrt(sysP[ii])/100.*Rb0[ii]; // sqrt(x*x + y*y + ...)*Rb
+    sysM[ii] = sqrt(sysM[ii])/100.*Rb0[ii];
+    dxSys[ii] = 0.15;
+    cout << "pT: " << pTSys[ii] << " Sys%(+/-): " << sysP[ii] << " / " << sysM[ii] << endl; 
+  }
+
+  TGraphAsymmErrors* grSys = new TGraphAsymmErrors(plotCount0-1,ptOFF1,Rb0,dxSys,dxSys,sysM,sysP);
 
   c1->cd(1);
+  gPad->SetBottomMargin(0.15);
 
-  grP->SetTitle("");
-  grP->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
-  grP->GetYaxis()->SetTitle("B#rightarrowNPE / Inclusive#rightarrowNPE");
-  grP->GetXaxis()->SetTitleSize(0.06);
-  grP->GetYaxis()->SetTitleSize(0.06);
-  grP->GetXaxis()->SetTitleOffset(0.95);
-  grP->GetYaxis()->SetTitleOffset(0.77);
-  grP->GetXaxis()->SetLabelSize(0.06);
-  grP->GetYaxis()->SetLabelSize(0.06);
+  grshade->SetTitle("");
+  grshade->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
+  grshade->GetYaxis()->SetTitle("B#rightarrowNPE / Inclusive#rightarrowNPE");
+  grshade->GetXaxis()->SetTitleSize(0.06);
+  grshade->GetYaxis()->SetTitleSize(0.06);
+  grshade->GetXaxis()->SetTitleOffset(0.95);
+  grshade->GetYaxis()->SetTitleOffset(0.77);
+  grshade->GetXaxis()->SetLabelSize(0.06);
+  grshade->GetYaxis()->SetLabelSize(0.06);
+  grshade->GetXaxis()->SetLimits(0,12);
+  grshade->GetYaxis()->SetRangeUser(-0.1,1.2);
+  /*gr0->SetMarkerStyle(20);
+    gr0->SetMarkerSize(1.4);
+    gr0->SetLineColor(kBlue);
+    gr0->SetMarkerColor(kBlue);
+    gr2->SetMarkerStyle(22);
+    gr2->SetMarkerSize(1.4);
+    gr2->SetLineColor(kRed);
+    gr2->SetMarkerColor(kRed);*/ // For Comparing HT0 and HT2
   gr0->SetMarkerStyle(20);
   gr0->SetMarkerSize(1.4);
-  gr0->SetLineColor(kBlue);
-  gr0->SetMarkerColor(kBlue);
-  gr2->SetMarkerStyle(22);
-  gr2->SetMarkerSize(1.4);
-  gr2->SetLineColor(kRed);
-  gr2->SetMarkerColor(kRed);
-  gr0S->SetMarkerStyle(24);
-  gr0S->SetMarkerSize(1.4);
-  gr0S->SetLineColor(kGreen);
-  gr0S->SetMarkerColor(kGreen);
-  gr2S->SetMarkerStyle(26);
-  gr2S->SetMarkerSize(1.4);
-  gr2S->SetLineColor(kMagenta);
-  gr2S->SetMarkerColor(kMagenta);
+  gr0->SetLineColor(kRed);
+  gr0->SetMarkerColor(kRed);
+  //gr2->SetMarkerStyle(20);
+  //gr2->SetMarkerSize(1.4);
+  //gr2->SetLineColor(kRed);
+  //gr2->SetMarkerColor(kRed);
   grC->SetMarkerStyle(24);
   grC->SetMarkerSize(1);
   grC->SetLineColor(kMagenta);
   grC->SetMarkerColor(kMagenta);
-  grP->GetXaxis()->SetLimits(0,15);
-  grP->GetYaxis()->SetRangeUser(0,1);
-  grP->SetMarkerSize(1.4);
+
+  grP->SetMarkerSize(2.5);
   grF->SetLineStyle(1);
   grFmax->SetLineStyle(2);
   grFmin->SetLineStyle(2);
-  grP->SetMarkerStyle(33);
+  grP->SetMarkerStyle(29);
   grP->SetMarkerColor(kBlack);
+  grPS->SetMarkerColor(kBlack);
+  grPS->SetLineColor(kBlack);
   grPr->SetMarkerStyle(29);
   grPr->SetMarkerColor(9);
   grPr->SetLineColor(9);
@@ -822,72 +767,45 @@ void systematicsMinuit()
   grPPr->SetMarkerColor(49);
   grPPr->SetLineColor(49);
 
-  grP->Draw("AP");
+  grSys->SetFillColor(2);
+  grSys->SetFillStyle(1);
+  grSys->SetLineColor(2);
+  grSys->SetLineWidth(2);
+  grSys->SetMarkerColor(2);
+  grSys->SetMarkerStyle(20);
+  grSys->SetMarkerSize(2);
+  grPS->SetFillColor(1);
+  grPS->SetFillStyle(1);
+  grPS->SetLineColor(1);
+  grPS->SetLineWidth(2);
+  grPS->SetMarkerColor(1);
+  grPS->SetMarkerStyle(29);
+  grPS->SetMarkerSize(2.5);
+
+  grshade->Draw("AF");
+  grPS->Draw("same pe2");
+  grP->Draw("same P");
   //grC->Draw("same P");
-  gr2->Draw("same P");
+  //gr2->Draw("same P");
   grF->Draw("same");
   grFmax->Draw("same");
   grFmin->Draw("same");
   gr0->Draw("same P");
-  gr0S->Draw("same P");
-  gr2S->Draw("same P");
+  grSys->Draw("same pe2");
+  //grshade->Draw("same f");
   // grPr->Draw("same P");
   //grPPr->Draw("same P");
 
-  TLegend* leg2 = new TLegend(0.15,0.68,0.38,0.88);
-  leg2->AddEntry(gr0,"STAR Run 12 - HT0","pe");
-  leg2->AddEntry(gr2,"STAR Run 12 - HT2","pe");
-  leg2->AddEntry(gr0S,"STAR Run 12 - HT0, Sys","pe");
-  leg2->AddEntry(gr2S,"STAR Run 12 - HT2, Sys","pe");
+  TLegend* leg2 = new TLegend(0.15,0.7,0.52,0.88);
+  leg2->SetTextSize(.05);
+  leg2->AddEntry(gr0,"STAR Run 12","pe");
+  //leg2->AddEntry(gr2,"STAR Run 12","pe");
   // leg2->AddEntry(grC,"STAR Run 12 - Combined Analysis","pe");
   leg2->AddEntry(grP,"STAR Run 6","pe");
   //  leg2->AddEntry(grPr,"Run 12 Data, Run 5/6 Templates)","pe");
   //leg2->AddEntry(grPPr,"Run 5/6 Refit (prev Template)","pe");
-  leg2->AddEntry(grF,"FONLL Calculation","l");
+  leg2->AddEntry(grF,"FONLL","l");
   leg2->Draw("same");
-
-  TCanvas* sc1 = new TCanvas("sc1","Systematic Changes",150,0,1150,1000);
-  sc1->cd(1);
-  change0->SetTitle("");
-  change0->GetXaxis()->SetTitle("NPE p_{T} (GeV/c)");
-  change0->GetYaxis()->SetTitle("Percent Change (%)");
-  change0->GetXaxis()->SetTitleSize(0.06);
-  change0->GetYaxis()->SetTitleSize(0.06);
-  change0->GetXaxis()->SetTitleOffset(0.95);
-  change0->GetYaxis()->SetTitleOffset(0.77);
-  change0->GetXaxis()->SetLabelSize(0.05);
-  change0->GetYaxis()->SetLabelSize(0.05);   
-  change0->GetXaxis()->SetLimits(2,15);
-  change0->GetYaxis()->SetRangeUser(-50,50);
-  change0->SetMarkerStyle(22);
-  change0->SetMarkerSize(1.4);
-  change0->SetLineColor(kRed);
-  change0->SetMarkerColor(kRed);
-  /* change2->SetMarkerStyle(22);
-     change2->SetMarkerSize(1.4);
-     change2->SetLineColor(kRed);
-     change2->SetMarkerColor(kRed);*/
-  change0->Draw("AP");
-  //change2->Draw("same P");
-  //gStyle->SetOptFit(1111);
-  //change0->Fit("pol0","Q");
-  //TF1* fitRes = change0->GetFunction("pol0");
-  //fitRes->Draw("same");
-
-  TCanvas* fitA = new TCanvas("fitA","Test Fit Param A",150,0,1150,1000);
-  fitA->cd();
-  grAS->SetTitle("Norm. Fit Param");
-  grAS->GetXaxis()->SetTitle("pT");
-  grAS->GetYaxis()->SetTitle("p1");
-  grAS->SetMarkerSize(1.4);
-  grAS->SetMarkerStyle(20);
-  grAS->SetMarkerColor(kRed);
-  grAS->Draw("AP");
-  gStyle->SetOptFit(1111);
-  grAS->Fit("pol0","Q");
-  TF1* fitResA = grAS->GetFunction("pol0");
-  fitResA->Draw("same");
-
 
   // Write to Root File if open
   if(makeROOT){
@@ -895,13 +813,15 @@ void systematicsMinuit()
     file4->Close();
     file->cd();
     grP->Write("PreviousData");
+    grPS->Write("PreviousDataSys");
     //grC->Write("same P");
-    gr2->Write("HT2");
+    //gr2->Write("HT2");
     grF->Write("FONLL");
     grFmax->Write("FONLLmax");
     grFmin->Write("FONLLmin");
     gr0->Write("HT0");
-    change0->Write("sysChange");
+    grshade->Write("grshade");
+    grSys->Write("grSys");
     // grPr->Write("PrevTempMyData");
     //grPPr->Write("PrevTempPreData");
   }
@@ -959,8 +879,6 @@ void systematicsMinuit()
     // temp = fitResultC;
     // temp->Print(name);
     temp = c1;
-    temp->Print(name);
-    temp = sc1;
     temp->Print(name);
 
     sprintf(name, "FFOutput/%s.pdf]", FileName);
@@ -1063,8 +981,8 @@ void doFit(TMinuit* gMinuit, Double_t& p0, Double_t& p1, Double_t& e0, Double_t&
   gMinuit->mnexcm("SET ERR",arglist,1,ierflg);
 
   //starting values
-  double vstart[2]={0.5,1}; //frac
-  double step[2]={0.001,0.005}; //starting step
+  double vstart[2]={0.3,1}; //frac
+  double step[2]={0.005,0.005}; //starting step
   gMinuit->mnparm(0,"BtoNPE frac",vstart[0],step[0],0.000,2,ierflg);
   gMinuit->mnparm(1,"Scale Factor",vstart[1],step[1],0.000,2,ierflg);
   //simple scan to get better start values
@@ -1160,86 +1078,6 @@ void chi2_2(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
 
     double ycomb = getFitFunction(par,y1,y2);
     double ycomberr = getFitFunctionError(par,ey1,ey2);  
-    double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
-    chiSq += delta*delta;
-    nDof++;
-
-    //debug
-    //cout <<"k: " << k << " c: " << y1 << " b: " << y2 << " data/er: " << y0 << "/"
-    //	 << ey0 << " c2: " << chiSq << endl;
-  }
-
-  func = chiSq;
-  curChi2 = chiSq;
-  curNDF = nDof;
-
-}
-
-void chi2_0S(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
-
-  Int_t ptbin = currentPtBin;
-
-  if(projData0S[ptbin]->GetNbinsX()!= projC[ptbin]->GetNbinsX()){
-    cout<<"Warning: unequal bins! bin1 = "<< projData0S[ptbin]->GetNbinsX()<<" bin2 = "<<projC[ptbin]->GetNbinsX()<<endl;
-    return 0;
-  }
-  curChi2 = 0.;
-  curNDF = 0.;
-  double chiSq = 0.;
-  int nDof = 0; 
-
-  for(int k=rangeLow;k<rangeHigh;k++){
-
-    double y1  = projC[ptbin]     -> GetBinContent(k+1);
-    double y2  = projB[ptbin]     -> GetBinContent(k+1);
-    double y0  = projData0S[ptbin] -> GetBinContent(k+1);
-    double ey0 = projData0S[ptbin] -> GetBinError(k+1);
-    double ey1 = projC[ptbin]     -> GetBinError(k+1);
-    double ey2 = projB[ptbin]     -> GetBinError(k+1);
-
-    double ycomb = getFitFunctionS(par,y1,y2);
-    double ycomberr = getFitFunctionErrorS(par,ey1,ey2);  
-    double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
-
-    chiSq += delta*delta;
-    nDof++;
-
-    //debug
-    //cout <<"k: " << k << " c: " << y1 << " b: " << y2 << " data/er: " << y0 << "/"
-    //	 << ey0 << " c2: " << chiSq << endl;
-  }
-
-  func = chiSq;
-  curChi2 = chiSq;
-  curNDF = nDof;
-
-}
-
-void chi2_2S(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag){
-
-  Int_t ptbin = currentPtBin;
-
-  if(projData0S[ptbin]->GetNbinsX()!= projC[ptbin]->GetNbinsX()){
-    cout<<"Warning: unequal bins! bin1 = "<< projData0S[ptbin]->GetNbinsX()<<" bin2 = "<<projC[ptbin]->GetNbinsX()<<endl;
-    return 0;
-  }
-
-  curChi2 = 0.;
-  curNDF = 0.;
-  double chiSq = 0.;
-  int nDof = 0; 
-
-  for(int k=rangeLow;k<rangeHigh;k++){
-
-    double y1  = projC[ptbin]     -> GetBinContent(k+1);
-    double y2  = projB[ptbin]     -> GetBinContent(k+1);
-    double y0  = projData2S[ptbin] -> GetBinContent(k+1);
-    double ey0 = projData2S[ptbin] -> GetBinError(k+1);
-    double ey1 = projC[ptbin]     -> GetBinError(k+1);
-    double ey2 = projB[ptbin]     -> GetBinError(k+1);
-
-    double ycomb = getFitFunctionS(par,y1,y2);
-    double ycomberr = getFitFunctionErrorS(par,ey1,ey2);  
     double delta = (ycomb - y0) / sqrt(ey0*ey0+ycomberr*ycomberr);
     chiSq += delta*delta;
     nDof++;
@@ -1445,17 +1283,3 @@ double getFitFunctionError(Double_t *par, double ey1, double ey2)
   return ycomberr;
 }
 
-double getFitFunctionS(Double_t *par, double y1, double y2)
-{
-  double ycomb = FITPARAS*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
- // double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
-  //double ycomb = par[0]*y2 + y1*(1-par[0])+par[1];  // rb*yb + (1-rb)*yv + A
-  return ycomb;
-}
-
-double getFitFunctionErrorS(Double_t *par, double ey1, double ey2)
-{
-  double ycomberr = FITPARAS*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
- // double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
-  return ycomberr;
-}

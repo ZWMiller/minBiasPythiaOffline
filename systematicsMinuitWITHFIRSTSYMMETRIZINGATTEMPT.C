@@ -58,25 +58,22 @@ Double_t curNDF;
 Int_t rangeLow  = 85;  //85-116 for near-side only
 Int_t rangeHigh = 116; //75-125 for ~(-pi,pi)
 Double_t FITPARA = 1.033; // From Fit of P1. Error is 0.007 on fit`
-Double_t FITPARAS = 1.025; // From Fit of P1. Error is 0.007 on fit`
-//FITPARAS = 1.116; // For gamma + 14% sys
-//FITPARAS = 0.9364; // For gamma - 14% sys
-//FITPARAS = 0.9917;// For pi0 Dal - 14% sys
-//FITPARAS = 1.071  // for pi0 Dal + 14%
-//FITPARAS = 1.012  // for eta Dal - 23%
-//FITPARAS = 1.053  // for eta Dal + 23%
-//FITPARAS = 1.031  // for eta Dal - Stats (1 Sig)
-//FITPARAS = 1.035  // for eta Dal + Stats (1 Sig)
-//FITPARAS = 1.047  // for gamma   + Stats (1 Sig)
-//FITPARAS = 1.019  // for gamma   - Stats (1 Sig)
-//FITPARAS = 1.028  // for pi0 Dal - Stats (1 Sig)
-//FITPARAS = 1.046  // for pi0 Dal + Stats (1 Sig)
-//FITPARAS = 1.015  // for total Reco + Fit Uncert (1 Sig)
-//FITPARAS = 1.050  // for total Reco - Fit Uncert (1 Sig)
-//FITPARAS = 1.05  // for Pileup - Fit Uncert (1 Sig)
-//FITPARAS = 1.016  // for Pileup + Fit Uncert (1 Sig)
-//FITPARAS = 1.04  // for Purity + stats (1 Sig)
-//FITPARAS = 1.025  // for Purity - stats (1 Sig)
+Double_t FITPARAS = 1.017; // From Fit of P1. Error is 0.007 on fit`
+//FITPARAS = 1.062; // For gamma + 5% sys
+//FITPARAS = 0.998; // For gamma - 5% sys
+//FITPARAS = 1.016; // For pi0 Dal - 5% sys
+//FITPARAS = 1.045  // for pi0 Dal + 5%
+//FITPARAS = 1.035  // for eta Dal +/- 5%
+//FITPARAS = 1.029  // for eta Dal - Stats (1 Sig)
+//FITPARAS = 1.016  // for eta Dal + Stats (1 Sig)
+//FITPARAS = 1.044  // for gamma   + Stats (1 Sig)
+//FITPARAS = 1.017  // for gamma   - Stats (1 Sig)
+//FITPARAS = 1.025  // for pi0 Dal - Stats (1 Sig)
+//FITPARAS = 1.044  // for pi0 Dal + Stats (1 Sig)
+//FITPARAS = 1.031  // for total Reco + Fit Uncert (1 Sig)
+//FITPARAS = 1.048  // for total Reco - Fit Uncert (1 Sig)
+//FITPARAS = 1.048  // for Pileup - Fit Uncert (1 Sig)
+//FITPARAS = 1.014  // for Pileup + Fit Uncert (1 Sig)
 //delPhi Plot Limits
 Double_t plotHigh[numPtBins] = {0.3,0.32,0.32,0.45,0.47,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6};
 Double_t plotLow[numPtBins] = {0.05,0.05,0.05,0.0,0.0,0.0,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1,-0.1};
@@ -108,7 +105,7 @@ Double_t RbPP[2],EbPP[2],pTPP[2],SFPP[2],eSFPP[2];
 // For Scale Check
 Double_t scX[numPtBins], scY[numPtBins];
 
-void systematicsMinuit()
+void minuitFit()
 {
 
   TH1F::SetDefaultSumw2(); 
@@ -198,12 +195,12 @@ void systematicsMinuit()
     bPtNorms[ptbin]   = (TH1F*)fT->Get(Form("beEventTally_%i",ptbin));
     cPtNorms[ptbin]   = (TH1F*)fT->Get(Form("ceEventTally_%i",ptbin));
 
-    norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
-    norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
-    normB = bPtNorms[ptbin]->GetBinContent(1); // 2x is for wrapping dPhi about 0
-    normC = cPtNorms[ptbin]->GetBinContent(1);
-    norm0S = histoNorms->GetBinContent(histoNormsS->GetBin(1,ptbin+1));
-    norm2S = histoNorms->GetBinContent(histoNormsS->GetBin(3,ptbin+1));
+    norm0 = 2*histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
+    norm2 = 2*histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
+    normB = 2.*bPtNorms[ptbin]->GetBinContent(1); // 2x is for wrapping dPhi about 0
+    normC = 2.*cPtNorms[ptbin]->GetBinContent(1);
+    norm0S = 2*histoNorms->GetBinContent(histoNormsS->GetBin(1,ptbin+1));
+    norm2S = 2*histoNorms->GetBinContent(histoNormsS->GetBin(3,ptbin+1));
 
 
     cout << ptbin << "; 0: " << norm0 << " 2: " << norm2 << endl;
@@ -274,7 +271,7 @@ void systematicsMinuit()
       {
         double current = changeHist->GetBinContent(chn);
         double error = changeHist->GetBinError(chn);
-        //changeHist->SetBinContent(chn, current+error);
+        changeHist->SetBinContent(chn, current+error);
       }
       changeHist->SetLineColor(kRed);
       changeHist->SetMarkerColor(kRed);
@@ -291,7 +288,7 @@ void systematicsMinuit()
     projData2S[ptbin]->Rebin(RB);
 
     // Assume symmetry for templates, use all statistics on one side, then wrap about 0
-    /*for(int q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
+    for(int q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
     {
       double binDPhi = projC[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
       double binVal  = projC[ptbin]->GetBinContent(q); // get number of counts in -dPhi
@@ -348,7 +345,7 @@ void systematicsMinuit()
       cout << "combined: " << projData2S[ptbin]->GetBinContent(q) << endl;
 
 
-    }*/
+    }
 
     // Clone to make plots without effecting fits
     plotD0[ptbin] = (TH1D*) projData0[ptbin]->Clone();
