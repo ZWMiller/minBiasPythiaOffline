@@ -58,7 +58,7 @@ Double_t curNDF;
 Int_t rangeLow  = 85;  //85-116 for near-side only
 Int_t rangeHigh = 116; //75-125 for ~(-pi,pi)
 Double_t FITPARA = 1.033; // From Fit of P1. Error is 0.007 on fit`
-Double_t FITPARAS = 1.025; // From Fit of P1. Error is 0.007 on fit`
+Double_t FITPARAS = 1.033; // From Fit of P1. Error is 0.007 on fit`
 //FITPARAS = 1.116; // For gamma + 14% sys
 //FITPARAS = 0.9364; // For gamma - 14% sys
 //FITPARAS = 0.9917;// For pi0 Dal - 14% sys
@@ -876,16 +876,16 @@ void systematicsMinuit()
 
   TCanvas* fitA = new TCanvas("fitA","Test Fit Param A",150,0,1150,1000);
   fitA->cd();
-  grAS->SetTitle("Norm. Fit Param");
-  grAS->GetXaxis()->SetTitle("pT");
-  grAS->GetYaxis()->SetTitle("p1");
-  grAS->SetMarkerSize(1.4);
-  grAS->SetMarkerStyle(20);
-  grAS->SetMarkerColor(kRed);
-  grAS->Draw("AP");
+  grA->SetTitle("Norm. Fit Param");
+  grA->GetXaxis()->SetTitle("pT");
+  grA->GetYaxis()->SetTitle("p1");
+  grA->SetMarkerSize(1.4);
+  grA->SetMarkerStyle(20);
+  grA->SetMarkerColor(kRed);
+  grA->Draw("AP");
   gStyle->SetOptFit(1111);
-  grAS->Fit("pol0","Q");
-  TF1* fitResA = grAS->GetFunction("pol0");
+  grA->Fit("pol0","Q");
+  TF1* fitResA = grA->GetFunction("pol0");
   fitResA->Draw("same");
 
 

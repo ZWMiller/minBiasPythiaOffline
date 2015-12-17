@@ -876,16 +876,16 @@ void systematicsMinuit()
 
   TCanvas* fitA = new TCanvas("fitA","Test Fit Param A",150,0,1150,1000);
   fitA->cd();
-  grAS->SetTitle("Norm. Fit Param");
-  grAS->GetXaxis()->SetTitle("pT");
-  grAS->GetYaxis()->SetTitle("p1");
-  grAS->SetMarkerSize(1.4);
-  grAS->SetMarkerStyle(20);
-  grAS->SetMarkerColor(kRed);
-  grAS->Draw("AP");
+  grA->SetTitle("Norm. Fit Param");
+  grA->GetXaxis()->SetTitle("pT");
+  grA->GetYaxis()->SetTitle("p1");
+  grA->SetMarkerSize(1.4);
+  grA->SetMarkerStyle(20);
+  grA->SetMarkerColor(kRed);
+  grA->Draw("AP");
   gStyle->SetOptFit(1111);
-  grAS->Fit("pol0","Q");
-  TF1* fitResA = grAS->GetFunction("pol0");
+  grA->Fit("pol0","Q");
+  TF1* fitResA = grA->GetFunction("pol0");
   fitResA->Draw("same");
 
 
@@ -1432,16 +1432,16 @@ void chi2_PP1(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag
 
 double getFitFunction(Double_t *par, double y1, double y2)
 {
-  double ycomb = FITPARA*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
-  //double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
+  //double ycomb = FITPARA*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
+  double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
   //double ycomb = par[0]*y2 + y1*(1-par[0])+par[1];  // rb*yb + (1-rb)*yv + A
   return ycomb;
 }
 
 double getFitFunctionError(Double_t *par, double ey1, double ey2)
 {
-  double ycomberr = FITPARA*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
-  // double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
+ // double ycomberr = FITPARA*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
+  double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
   return ycomberr;
 }
 
