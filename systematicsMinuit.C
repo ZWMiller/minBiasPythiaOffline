@@ -55,8 +55,8 @@ TH1D *HpphiB[2];
 Int_t currentPtBin;
 Double_t curChi2;
 Double_t curNDF;
-Int_t rangeLow  = 85;  //85-116 for near-side only
-Int_t rangeHigh = 116; //75-125 for ~(-pi,pi)
+Int_t rangeLow  = 75;  //85-116 for near-side only
+Int_t rangeHigh = 126; //75-125 for ~(-pi,pi)
 Double_t FITPARA = 1.033; // From Fit of P1. Error is 0.007 on fit`
 Double_t FITPARAS = 1.033; // From Fit of P1. Error is 0.007 on fit`
 //FITPARAS = 1.116; // For gamma + 14% sys

@@ -47,7 +47,7 @@ Double_t curChi2;
 Double_t curNDF;
 
 // Fit Options
-Bool_t kSymmetrize = kTRUE; // if true, symmetrize templates about dPhi=0
+Bool_t kSymmetrize = kFALSE; // if true, symmetrize templates about dPhi=0
 Bool_t oneParamFit = kFALSE; // if false, do 2 param fit
 Double_t FITPARA = 1.067; // From Fit of P1: 1.033. Error is 0.007 on fit`
 Int_t rangeLow  = 75;  //85-116 for near-side only

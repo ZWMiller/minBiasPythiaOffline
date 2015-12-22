@@ -45,9 +45,13 @@ TH1D *HpphiB[2];
 Int_t currentPtBin;
 Double_t curChi2;
 Double_t curNDF;
+
+// Fit Options
+Bool_t kSymmetrize = kTRUE; // if true, symmetrize templates about dPhi=0
+Bool_t oneParamFit = kFALSE; // if false, do 2 param fit
+Double_t FITPARA = 1.067; // From Fit of P1: 1.033. Error is 0.007 on fit`
 Int_t rangeLow  = 75;  //85-116 for near-side only
 Int_t rangeHigh = 125; //75-125 for ~(-pi,pi)
-Double_t FITPARA = 1.033; // From Fit of P1: 1.033. Error is 0.007 on fit`
 
 //delPhi Plot Limits
 Double_t plotHigh[numPtBins] = {0.3,0.32,0.32,0.45,0.47,0.6,1.0,2,1.6,1.6,1.6,1.6,1.6,1.6};
@@ -160,17 +164,20 @@ void minuitFit()
     bPtNorms[ptbin]   = (TH1F*)fT->Get(Form("beEventTally_%i",ptbin));
     cPtNorms[ptbin]   = (TH1F*)fT->Get(Form("ceEventTally_%i",ptbin));
 
-    /*norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
-    norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
-    normB = 2.0*bPtNorms[ptbin]->GetBinContent(1); //2x is for wrapping about dPhi = 0
-    normC = 2.0*cPtNorms[ptbin]->GetBinContent(1);
-    */
-     
-    norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
-    norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
-    normB = bPtNorms[ptbin]->GetBinContent(1); 
-    normC = cPtNorms[ptbin]->GetBinContent(1);   
-
+    if(kSymmetrize)
+    {
+      norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
+      norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
+      normB = 2.0*bPtNorms[ptbin]->GetBinContent(1); //2x is for wrapping about dPhi = 0
+      normC = 2.0*cPtNorms[ptbin]->GetBinContent(1);
+    }
+    else
+    {
+      norm0 = histoNorms->GetBinContent(histoNorms->GetBin(1,ptbin+1));
+      norm2 = histoNorms->GetBinContent(histoNorms->GetBin(3,ptbin+1));
+      normB = bPtNorms[ptbin]->GetBinContent(1); 
+      normC = cPtNorms[ptbin]->GetBinContent(1);   
+    }
     cout << ptbin << "; 0: " << norm0 << " 2: " << norm2 << endl;
 
     if( norm0 == 0)
@@ -222,56 +229,37 @@ void minuitFit()
     //rangeHigh = 58;
 
     // Assume symmetry for templates, use all statistics on one side, then wrap about 0
-   for(Int_t q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
+    if(kSymmetrize)
     {
-      double binDPhi = projC[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
-      double binVal  = projC[ptbin]->GetBinContent(q); // get number of counts in -dPhi
-      Int_t posDPhi = projC[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
-      double binErr = projC[ptbin]->GetBinError(q);
-      double posBinErr = projC[ptbin]->GetBinError(posDPhi);
-      double binVal2 = projC[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
-      projC[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
-      //double w1 = 1./(binErr*binErr);
-      //double w2 = 1./(posBinErr*posBinErr);
-      //double addErr = (w1*binVal+w2*binVal2)/(binVal+binVal2);
-      //projC[ptbin]->SetBinError(q,addErr);
-      //projC[ptbin]->SetBinError(posDPhi,addErr);
-      projC[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
-      cout << "c -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projC[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
-      cout << "combined: " << projC[ptbin]->GetBinContent(q) << endl;
+      for(Int_t q=projC[ptbin]->GetXaxis()->GetFirst(); q < projC[ptbin]->GetXaxis()->FindBin(0.0); q++)
+      {
+        double binDPhi = projC[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+        double binVal  = projC[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+        Int_t posDPhi = projC[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+        double binErr = projC[ptbin]->GetBinError(q);
+        double posBinErr = projC[ptbin]->GetBinError(posDPhi);
+        double binVal2 = projC[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+        projC[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+        //double w1 = 1./(binErr*binErr);
+        //double w2 = 1./(posBinErr*posBinErr);
+        //double addErr = (w1*binVal+w2*binVal2)/(binVal+binVal2);
+        //projC[ptbin]->SetBinError(q,addErr);
+        //projC[ptbin]->SetBinError(posDPhi,addErr);
+        projC[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+        cout << "c -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projC[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+        cout << "combined: " << projC[ptbin]->GetBinContent(q) << endl;
 
 
-      binDPhi = projB[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
-      binVal  = projB[ptbin]->GetBinContent(q); // get number of counts in -dPhi
-      posDPhi = projB[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
-      binVal2 = projB[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
-      projB[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
-      projB[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
-      cout << "b -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projB[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
-      cout << "combined: " << projB[ptbin]->GetBinContent(q) << endl;
+        binDPhi = projB[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
+        binVal  = projB[ptbin]->GetBinContent(q); // get number of counts in -dPhi
+        posDPhi = projB[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
+        binVal2 = projB[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
+        projB[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
+        projB[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
+        cout << "b -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projB[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
+        cout << "combined: " << projB[ptbin]->GetBinContent(q) << endl;
+      }
     }
-
-    /*  binDPhi = projData0[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
-      binVal  = projData0[ptbin]->GetBinContent(q); // get number of counts in -dPhi
-      posDPhi = projData0[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
-      binVal2 = projData0[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
-      projData0[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
-      projData0[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
-      cout << "D0 -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData0[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
-      cout << "combined: " << projData0[ptbin]->GetBinContent(q) << endl;
-
-      binDPhi = projData2[ptbin]->GetXaxis()->GetBinCenter(q);  // get dPhi (should be negative)
-      binVal  = projData2[ptbin]->GetBinContent(q); // get number of counts in -dPhi
-      posDPhi = projData2[ptbin]->GetXaxis()->FindBin(abs(binDPhi)); // get +dPhi bin
-      binVal2 = projData2[ptbin]->GetBinContent(posDPhi); // get number of counts in dPhi
-      projData2[ptbin]->SetBinContent(q,binVal+binVal2); // Set negative dPhi to combination of dPhi contents
-      projData2[ptbin]->SetBinContent(posDPhi,binVal+binVal2); // Set positive dPhi to combination of dPhi contents
-      cout << "D2 -dPhi: " << binDPhi << "," << binVal << " dPhi: " << projData2[ptbin]->GetXaxis()->GetBinCenter(posDPhi) << "," << binVal2 << endl;
-      cout << "combined: " << projData2[ptbin]->GetBinContent(q) << endl;
-
-
-    }*/
-
 
     // Clone to make plots without effecting fits
     plotD0[ptbin] = (TH1D*) projData0[ptbin]->Clone();
@@ -352,7 +340,7 @@ void minuitFit()
       Hdphi[1]->Draw("same");*/ 
 
     /*if(ptbin == 0)
-    {
+      {
       prettyPlot->cd();
       plotC[ptbin]->SetStats(kFALSE);
       plotB[ptbin]->SetStats(kFALSE);
@@ -377,7 +365,7 @@ void minuitFit()
       legPret->AddEntry(plotD0[ptbin],"NPE-h 2012 STAR Data","LPE");
       lbl[ptbin]->Draw("same");
       legPret->Draw("same");
-    }*/
+      }*/
 
     /*// Draw Scale Check
       scaleCheck->cd(1);
@@ -450,7 +438,7 @@ void minuitFit()
     cClone2->Draw("same hist");
     bClone2->Draw("same hist");
     stat[0][ptbin]->Draw("same");
-   // lbl[ptbin]->Draw("same");
+    // lbl[ptbin]->Draw("same");
 
 
     cout << "!!!!!!! HT2 ptbin: " <<  highpt[ptbin] << "-" << lowpt[ptbin] <<" !!!!!!!"<< endl;
@@ -476,7 +464,7 @@ void minuitFit()
     bClone2 = (TH1D*) projB[ptbin]->Clone();
     stat[2][ptbin] = new TPaveText(.4,.75,.85,.85,Form("NB NDC%i",ptbin));
     sprintf(statLabel,"Chi2/NDF: %.2f/%.0f; rB: %.2f",curChi2,curNDF,p21[ptbin]);
-//    sprintf(statLabel,"Chi2/NDF: %.2f/%.2f",curChi2,curNDF);
+    //    sprintf(statLabel,"Chi2/NDF: %.2f/%.2f",curChi2,curNDF);
     stat[2][ptbin]->InsertText(statLabel);
     stat[2][ptbin]->InsertText(textLabel);
     stat[2][ptbin]->SetFillColor(kWhite);
@@ -500,7 +488,7 @@ void minuitFit()
     cClone2->Draw("same hist");
     bClone2->Draw("same hist");
     stat[2][ptbin]->Draw("same");
-   // lbl[ptbin]->Draw("same");
+    // lbl[ptbin]->Draw("same");
 
     cout << "!!!!!!! HTC ptbin: " <<  highpt[ptbin] << "-" << lowpt[ptbin] <<" !!!!!!!"<< endl;
     gMinuit->SetFCN(chi2_C);
@@ -512,7 +500,7 @@ void minuitFit()
     plotCount++;
   }
 
- /* cout << "!!!!!!! Previous Data: 0"<<" !!!!!!!"<< endl;
+  /* cout << "!!!!!!! Previous Data: 0"<<" !!!!!!!"<< endl;
 
   //////////
   // 2.5-3.5 GeV Bin
@@ -527,8 +515,8 @@ void minuitFit()
   // Plot results
   //fitResultP->cd(1);
   TH1D* dClone = (TH1D*) Hdphi[0]->Clone();
-    TH1D* cClone = (TH1D*) projC[0]->Clone();
-    TH1D* bClone = (TH1D*) projB[0]->Clone();
+  TH1D* cClone = (TH1D*) projC[0]->Clone();
+  TH1D* bClone = (TH1D*) projB[0]->Clone();
   TH1D* dClone = (TH1D*) projData0[0]->Clone();
   TH1D* cClone = (TH1D*) HpphiD[0]->Clone();
   TH1D* bClone = (TH1D*) HpphiB[0]->Clone();
@@ -559,8 +547,8 @@ void minuitFit()
   // Plot results
   //fitResultP->cd(2);
   dClone = (TH1D*) Hdphi[1]->Clone();
-    cClone = (TH1D*) projC[3]->Clone();
-    bClone = (TH1D*) projB[3]->Clone();
+  cClone = (TH1D*) projC[3]->Clone();
+  bClone = (TH1D*) projB[3]->Clone();
   dClone = (TH1D*) projData2[3]->Clone();
   cClone = (TH1D*) HpphiD[1]->Clone();
   bClone = (TH1D*) HpphiB[1]->Clone();
@@ -631,10 +619,10 @@ void minuitFit()
   dClone->Draw();
   cClone->Draw("same");
   stat[3][3]->Draw("same");
-*/
+  */
 
-  // Get FONLL Calc
-  Int_t l=0;
+    // Get FONLL Calc
+    Int_t l=0;
   char line[1000];
   Float_t xF[100],yF[100],minF[100],maxF[100];
   ifstream fp("/Users/zach/Research/pythia/200GeVTemplate/FONLL.txt",ios::in);
@@ -1305,16 +1293,22 @@ void chi2_PP1(Int_t &npar,Double_t *gin,Double_t &func,Double_t *par,Int_t iflag
 
 double getFitFunction(Double_t *par, double y1, double y2)
 {
-  //double ycomb = FITPARA*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
-  double ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
+  double ycomb;
+  if(oneParamFit)
+    ycomb = FITPARA*(par[0]*y2 + y1*(1-par[0])); // rb*yb + (1-rb)*yv
+  else
+    ycomb = par[1]*par[0]*y2 + y1*(1-par[0])*par[1]; //A*rb*yb + A*(1-rb)*yc
   //double ycomb = par[0]*y2 + y1*(1-par[0])+par[1];  // rb*yb + (1-rb)*yv + A
   return ycomb;
 }
 
 double getFitFunctionError(Double_t *par, double ey1, double ey2)
 {
- // double ycomberr = FITPARA*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
-   double ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
+  double ycomberr;
+  if(oneParamFit)
+    ycomberr = FITPARA*sqrt(par[0]*par[0]*ey2*ey2 + (1-par[0])*(1-par[0])*ey1*ey1);
+  else
+    ycomberr = sqrt(par[1]*par[0]*par[1]*par[0]*ey2*ey2 + ey1*ey1*(1-par[0])*par[1]*(1-par[0])*par[1]); //A*rb*yb + A*(1-rb)*yc
   return ycomberr;
 }
 
